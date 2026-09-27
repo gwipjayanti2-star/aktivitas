@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laporan Aktivitas GWIP </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        maroon: {
+                            50: '#fdf2f2',
+                            100: '#fbe4e4',
+                            200: '#f8caca',
+                            300: '#f2a1a1',
+                            400: '#e76b6b',
+                            500: '#d93e3e',
+                            600: '#c12626',
+                            700: '#a21d1d', // Primary Maroon
+                            800: '#861b1b',
+                            900: '#701a1a', // Darker Maroon
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        .hide-scroll::-webkit-scrollbar { display: none; }
+        .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+        .glass-header { background: rgba(162, 29, 29, 0.95); backdrop-filter: blur(10px); }
+        
+        /* Mobile Card Layout for Table */
+        @media (max-width: 640px) {
+            .table-header { display: none; }
+            .activity-row { display: flex; flex-direction: column; background: white; margin-bottom: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1rem; }
+            .activity-cell { padding: 0.25rem 0; display: flex; justify-content: space-between; align-items: center; border: none; }
+            .activity-cell::before { content: attr(data-label); font-weight: 600; color: #4b5563; font-size: 0.875rem; }
+            .action-cell { border-top: 1px solid #e5e7eb; margin-top: 0.5rem; padding-top: 0.5rem; justify-content: flex-end; gap: 0.5rem; }
+        }
+    </style>
+    <!-- Dynamic Manifest Link -->
+    <link id="manifest-link" rel="manifest" href="">
+</head>
+<body class="text-gray-800 pb-24">
+
+    <nav class="glass-header sticky top-0 z-40 text-white shadow-lg">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-clipboard-list text-2xl"></i>
+                    <span class="font-bold text-lg leading-tight">GWIP Lantai 1<br><span class="text-xs font-normal text-maroon-200">Log Aktivitas</span></span>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="openSettingsModal()" class="p-2 bg-maroon-800 hover:bg-maroon-900 rounded-full transition">
+                        <i class="fas fa-cog"></i>
+                    </button>
+                    <button onclick="shareWhatsApp()" class="p-2 bg-green-500 hover:bg-green-600 rounded-full transition shadow text-white">
+                        <i class="fab fa-whatsapp"></i>
+                    </button>
+                    <button onclick="exportToPDF()" class="p-2 bg-blue-500 hover:bg-blue-600 rounded-full transition shadow text-white">
+                        <i class="fas fa-file-pdf"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Worker Tabs -->
+            <div id="workerTabs" class="flex overflow-x-auto hide-scroll gap-2 pb-2">
+                <!-- Rendered dynamically -->
+            </div>
+        </div>
+    </nav>
+
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6" id="report-container">
+        
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-gray-800" id="currentWorkerTitle">Aktivitas Pekerja</h2>
+            <button onclick="openAddModal()" class="bg-maroon-700 hover:bg-maroon-800 text-white px-4 py-2 rounded-lg text-sm font-medium shadow transition flex items-center gap-2">
+                <i class="fas fa-plus"></i> <span class="hidden sm:inline">Tambah Aktivitas</span>
+            </button>
+        </div>
+
+        <div class="bg-white rounded-xl shadow overflow-hidden">
+            <table class="w-full text-left border-collapse" id="pdf-table">
+                <thead class="bg-gray-50 table-header border-b border-gray-200">
+                    <tr>
+                        <th class="p-4 font-semibold text-gray-600 w-1/2">Aktivitas</th>
+                        <th class="p-4 font-semibold text-gray-600 text-center">Freq</th>
+                        <th class="p-4 font-semibold text-gray-600 text-center">Menit/Freq</th>
+                        <th class="p-4 font-semibold text-gray-600 text-center">Total (Mnt)</th>
+                        <th class="p-4 font-semibold text-gray-600 text-right print-hide">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody id="activityList" class="divide-y divide-gray-100">
+                    <!-- Activities populated dynamically -->
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- API Sync Button -->
+        <div class="mt-8 flex justify-center print-hide">
+            <button onclick="syncToSpreadsheet()" id="syncBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition flex items-center gap-2">
+                <i class="fas fa-cloud-upload-alt"></i> Sync ke Google Spreadsheet
+            </button>
+        </div>
+    </main>
+
+    <div class="fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-30 print-hide">
+        <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div>
+                <p class="text-xs text-gray-500 font-medium">Total Waktu Pekerja Ini</p>
+                <div class="flex items-center gap-2">
+                    <span id="totalTimeDisplay" class="text-xl font-bold text-gray-800">0</span>
+                    <span class="text-sm font-medium text-gray-500">/ 420 Menit</span>
+                </div>
+            </div>
+            <div id="statusBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600">
+                Memuat...
+            </div>
+        </div>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div id="activityModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
+            <div class="bg-maroon-700 p-4 flex justify-between items-center text-white">
+                <h3 class="font-bold text-lg" id="modalTitle">Tambah Aktivitas</h3>
+                <button onclick="closeModal('activityModal')" class="text-maroon-200 hover:text-white transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <input type="hidden" id="editActivityId">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Aktivitas</label>
+                    <input type="text" id="activityName" class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:border-maroon-500 focus:ring-1 focus:ring-maroon-500 outline-none transition" placeholder="Contoh: Dorong bahan ke ck">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Frekuensi</label>
+                        <input type="number" id="activityFreq" min="1" value="1" class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:border-maroon-500 outline-none transition">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Waktu (Menit)</label>
+                        <input type="number" id="activityTime" min="1" value="10" class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:border-maroon-500 outline-none transition">
+                    </div>
+                </div>
+                <div class="pt-4">
+                    <button onclick="saveActivity()" class="w-full bg-maroon-700 hover:bg-maroon-800 text-white font-bold py-3 rounded-xl shadow transition">Simpan Aktivitas</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-gray-800 p-4 flex justify-between items-center text-white shrink-0">
+                <h3 class="font-bold text-lg"><i class="fas fa-database mr-2"></i> Pengaturan & Backend</h3>
+                <button onclick="closeModal('settingsModal')" class="text-gray-400 hover:text-white transition"><i class="fas fa-times text-xl"></i></button>
+            </div>
+            <div class="p-6 overflow-y-auto space-y-6">
+                <!-- Pekerja Management -->
+                <div>
+                    <h4 class="font-bold text-gray-800 mb-3 border-b pb-2">Kelola Pekerja</h4>
+                    <div id="workersListEdit" class="space-y-2 mb-3"></div>
+                    <div class="flex gap-2 mb-2">
+                        <input type="text" id="newWorkerName" placeholder="Nama pekerja baru" class="flex-1 border border-gray-300 rounded-lg p-2 text-sm outline-none">
+                        <button onclick="addWorker()" class="bg-gray-800 text-white px-3 py-2 rounded-lg text-sm font-bold"><i class="fas fa-plus"></i></button>
+                    </div>
+                    <button onclick="addFloor2WorkerTemplate()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm">
+                        <i class="fas fa-layer-group"></i> + Tambah Preset Pekerja Lantai 2 (420 Mnt)
+                    </button>
+                </div>
+
+                <!-- API Settings -->
+                <div>
+                    <h4 class="font-bold text-gray-800 mb-3 border-b pb-2">Google Spreadsheet API</h4>
+                    <p class="text-xs text-gray-500 mb-3">Masukkan URL Web App dari Google Apps Script untuk menyimpan data langsung ke Spreadsheet Anda.</p>
+                    <input type="text" id="apiUrlInput" placeholder="https://script.google.com/macros/s/AKfycbwAEhuorgrFTOUA8WCAeYx_KOTeZMMmAeiOCXtDLgUOYMtlNfhytH6cRsKENY3L5T44mA/exec" class="w-full border-gray-300 border rounded-lg p-3 text-sm bg-gray-50 outline-none mb-2">
+                    <button onclick="saveApiUrl()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-bold transition">Simpan URL API</button>
+                </div>
+
+                <!-- Setup Guide -->
+                <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
+                    <h4 class="font-bold text-yellow-800 text-sm mb-2"><i class="fas fa-info-circle"></i> Cara Setup Database Spreadsheet</h4>
+                    <ol class="text-xs text-yellow-700 list-decimal pl-4 space-y-1">
+                        <li>Buka Google Sheets baru.</li>
+                        <li>Klik <b>Ekstensi</b> > <b>Apps Script</b>.</li>
+                        <li>Hapus semua kode, lalu paste kode di bawah ini.</li>
+                        <li>Klik <b>Terapkan</b> > <b>Deployment Baru</b> > Pilih <b>Aplikasi Web</b>.</li>
+                        <li>Akses: <b>Siapa saja</b>, lalu Deploy. Copy URL-nya ke kolom di atas.</li>
+                    </ol>
+                    <textarea readonly class="w-full mt-3 h-24 text-xs font-mono bg-white border border-yellow-300 p-2 rounded hide-scroll" onclick="this.select()">
+function doPost(e) {
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  var data = JSON.parse(e.postData.contents);
+  var date = new Date().toLocaleString("id-ID");
+  
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(["Tanggal", "Nama Pekerja", "Aktivitas", "Frekuensi", "Menit/Freq", "Total Menit"]);
+  }
+  
+  var rows = [];
+  data.forEach(function(item) {
+    rows.push([date, item.workerName, item.activity, item.frequency, item.timePerFreq, item.totalTime]);
+  });
+  
+  sheet.getRange(sheet.getLastRow() + 1, 1, rows.length, 6).setValues(rows);
+  return ContentService.createTextOutput(JSON.stringify({"status":"success"})).setMimeType(ContentService.MimeType.JSON);
+}
+                    </textarea>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Toast Alert -->
+    <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-2xl transition-all duration-300 opacity-0 -translate-y-10 z-50 flex items-center gap-3">
+        <i id="toastIcon" class="fas fa-info-circle"></i>
+        <span id="toastMsg" class="font-medium text-sm">Pesan</span>
+    </div>
+
+    <script>
+        // State Management
+        let workers = [
+            { id: 'w1', name: 'Pekerja 1 (Dumping & CK)' },
+            { id: 'w2', name: 'Pekerja 2 (Lantai 2 & L4)' },
+            { id: 'w3', name: 'Pekerja 3 (Cream & Oven)' }
+        ];
+
+        let activities = [];
+        let currentWorkerId = 'w1';
+        let apiUrl = '';
+
+        // Default Target 420 minutes distribution data
+        const defaultData = [
+            // Pekerja 1
+            { id: 'a1', workerId: 'w1', name: 'Nginput Data bonan ke stok jalur digital', frequency: 2, timePerFreq: 15 },
+            { id: 'a2', workerId: 'w1', name: 'Motong bonan di stok jalur digital', frequency: 2, timePerFreq: 15 },
+            { id: 'a3', workerId: 'w1', name: 'Dorong gula box kosong ke damping', frequency: 5, timePerFreq: 10 },
+            { id: 'a4', workerId: 'w1', name: 'Dorong bubuk ke ck', frequency: 4, timePerFreq: 15 },
+            { id: 'a5', workerId: 'w1', name: 'Dorong bakerfat ke ck', frequency: 3, timePerFreq: 15 },
+            { id: 'a6', workerId: 'w1', name: 'Dorong gula ck line 4 tong', frequency: 3, timePerFreq: 15 },
+            { id: 'a7', workerId: 'w1', name: 'Mapping terigu dumping & tapioka', frequency: 1, timePerFreq: 30 },
+            { id: 'a8', workerId: 'w1', name: 'Terima rm gwip dari gdrm', frequency: 2, timePerFreq: 20 },
+            { id: 'a9', workerId: 'w1', name: 'Dorong bahan ke ck', frequency: 3, timePerFreq: 15 },
+            { id: 'a10', workerId: 'w1', name: 'Dorong bon bonan bahan ck', frequency: 3, timePerFreq: 15 },
+
+            // Pekerja 2
+            { id: 'b1', workerId: 'w2', name: 'Nginput Data bonan ke stok jalur digital', frequency: 2, timePerFreq: 15 },
+            { id: 'b2', workerId: 'w2', name: 'Motong bonan di stok jalur digital', frequency: 2, timePerFreq: 15 },
+            { id: 'b3', workerId: 'w2', name: 'Dorong gula line 4 molding', frequency: 4, timePerFreq: 10 },
+            { id: 'b4', workerId: 'w2', name: 'Dorong tapioka line 4 & 2', frequency: 4, timePerFreq: 10 },
+            { id: 'b5', workerId: 'w2', name: 'Dorong bahan ke lt 2', frequency: 3, timePerFreq: 15 },
+            { id: 'b6', workerId: 'w2', name: 'Cor lexam rbd line 4', frequency: 2, timePerFreq: 15 },
+            { id: 'b7', workerId: 'w2', name: 'Cor lexam rbd line 3', frequency: 2, timePerFreq: 15 },
+            { id: 'b8', workerId: 'w2', name: 'Dorong glucosa line 2', frequency: 3, timePerFreq: 10 },
+            { id: 'b9', workerId: 'w2', name: 'Dorong gula ke lt 2 lewat lift stage 2', frequency: 3, timePerFreq: 15 },
+            { id: 'b10', workerId: 'w2', name: 'Dorong gula box isi formulasi ke lt 2', frequency: 3, timePerFreq: 15 },
+            { id: 'b11', workerId: 'w2', name: 'Dorong bonan flavor ke lt 2 dari ruang flavor', frequency: 2, timePerFreq: 20 },
+            { id: 'b12', workerId: 'w2', name: 'Naikin batre spare linde', frequency: 1, timePerFreq: 15 },
+
+            // Pekerja 3
+            { id: 'c1', workerId: 'w3', name: 'Nginput Data bonan ke stok jalur digital', frequency: 2, timePerFreq: 15 },
+            { id: 'c2', workerId: 'w3', name: 'Motong bonan di stok jalur digital', frequency: 2, timePerFreq: 15 },
+            { id: 'c3', workerId: 'w3', name: 'Dorong bahan formulasi ke cream', frequency: 3, timePerFreq: 15 },
+            { id: 'c4', workerId: 'w3', name: 'Dorong gula box kosong coki', frequency: 3, timePerFreq: 10 },
+            { id: 'c5', workerId: 'w3', name: 'Dorong gula box isi coki', frequency: 3, timePerFreq: 10 },
+            { id: 'c6', workerId: 'w3', name: 'Mapping bahan gwip lt 1', frequency: 1, timePerFreq: 20 },
+            { id: 'c7', workerId: 'w3', name: 'Mapping bubuk lt 1', frequency: 1, timePerFreq: 20 },
+            { id: 'c8', workerId: 'w3', name: 'Dorong bahan ke transit cream', frequency: 2, timePerFreq: 15 },
+            { id: 'c9', workerId: 'w3', name: 'Tarik rijek oven', frequency: 2, timePerFreq: 15 },
+            { id: 'c10', workerId: 'w3', name: 'Dorong cctj dan chc oven', frequency: 2, timePerFreq: 15 },
+            { id: 'c11', workerId: 'w3', name: 'Tarik palet kotor cream', frequency: 1, timePerFreq: 15 },
+            { id: 'c12', workerId: 'w3', name: 'Dorong SCP oven', frequency: 1, timePerFreq: 15 },
+            { id: 'c13', workerId: 'w3', name: 'Dorong cbr ke oven line 1&2', frequency: 1, timePerFreq: 15 },
+            { id: 'c14', workerId: 'w3', name: 'Dorong cocoa powder ke cream', frequency: 1, timePerFreq: 10 },
+            { id: 'c15', workerId: 'w3', name: 'Dorong cocoa liquor box ke cream', frequency: 1, timePerFreq: 10 },
+            { id: 'c16', workerId: 'w3', name: 'Dorong bakerfat ke cream', frequency: 1, timePerFreq: 10 },
+            { id: 'c17', workerId: 'w3', name: 'Dorong gula giling ke cream', frequency: 1, timePerFreq: 10 },
+            { id: 'c18', workerId: 'w3', name: 'Dorong bon bonan formulasi ke cream', frequency: 1, timePerFreq: 10 },
+            { id: 'c19', workerId: 'w3', name: 'Dorong Whey powder sgc Ayak ke cream', frequency: 1, timePerFreq: 10 },
+            { id: 'c20', workerId: 'w3', name: 'Dorong Whey powder ayak RSC ke cream', frequency: 1, timePerFreq: 10 },
+            { id: 'c21', workerId: 'w3', name: 'Tarik gula coki di cream buat balmil', frequency: 1, timePerFreq: 10 },
+            { id: 'c22', workerId: 'w3', name: 'Verif gula abon', frequency: 1, timePerFreq: 10 }
+        ];
+
+        function initApp() {
+            // Load from LocalStorage
+            const savedWorkers = localStorage.getItem('gwip_workers');
+            const savedActivities = localStorage.getItem('gwip_activities');
+            const savedApi = localStorage.getItem('gwip_api');
+            
+            if (savedWorkers) workers = JSON.parse(savedWorkers);
+            if (savedActivities) activities = JSON.parse(savedActivities);
+            else activities = [...defaultData]; // Use default distributed logic 420 mins if empty
+            if (savedApi) apiUrl = savedApi;
+
+            if(!workers.find(w => w.id === currentWorkerId)) {
+                currentWorkerId = workers[0]?.id || null;
+            }
+
+            renderWorkerTabs();
+            renderActivities();
+            renderSettingsWorkers();
+            document.getElementById('apiUrlInput').value = apiUrl;
+        }
+
+        function saveData() {
+            localStorage.setItem('gwip_workers', JSON.stringify(workers));
+            localStorage.setItem('gwip_activities', JSON.stringify(activities));
+        }
+
+        // Custom UI Tools
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            const icon = document.getElementById('toastIcon');
+            
+            toast.className = `fixed top-5 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-2xl transition-all duration-300 z-50 flex items-center gap-3 ${isError ? 'bg-red-600 text-white' : 'bg-gray-800 text-white'}`;
+            icon.className = isError ? 'fas fa-exclamation-circle' : 'fas fa-check-circle text-green-400';
+            
+            toast.classList.remove('opacity-0', '-translate-y-10');
+            setTimeout(() => {
+                toast.classList.add('opacity-0', '-translate-y-10');
+            }, 3000);
+        }
+
+        function generateId() {
+            return Math.random().toString(36).substr(2, 9);
+        }
+
+        function renderWorkerTabs() {
+            const tabsContainer = document.getElementById('workerTabs');
+            tabsContainer.innerHTML = '';
+            
+            workers.forEach(w => {
+                const isActive = w.id === currentWorkerId;
+                const btn = document.createElement('button');
+                btn.className = `whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition shadow-sm ${isActive ? 'bg-white text-maroon-700' : 'bg-maroon-800 text-maroon-100 hover:bg-maroon-600 border border-maroon-700'}`;
+                btn.innerText = w.name;
+                btn.onclick = () => { currentWorkerId = w.id; renderWorkerTabs(); renderActivities(); };
+                tabsContainer.appendChild(btn);
+            });
+            
+            const curWorker = workers.find(w => w.id === currentWorkerId);
+            if(curWorker) document.getElementById('currentWorkerTitle').innerText = curWorker.name;
+        }
+
+        function renderActivities() {
+            const list = document.getElementById('activityList');
+            list.innerHTML = '';
+            
+            const workerActivities = activities.filter(a => a.workerId === currentWorkerId);
+            let totalMins = 0;
+
+            if (workerActivities.length === 0) {
+                list.innerHTML = `<tr><td colspan="5" class="text-center p-8 text-gray-500"><i class="fas fa-folder-open text-3xl mb-2 opacity-50 block"></i> Belum ada aktivitas. Tambahkan sekarang!</td></tr>`;
+            } else {
+                workerActivities.forEach((a, index) => {
+                    const total = a.frequency * a.timePerFreq;
+                    totalMins += total;
+                    
+                    const tr = document.createElement('tr');
+                    tr.className = "activity-row hover:bg-maroon-50 transition border-b border-gray-100 last:border-none";
+                    tr.innerHTML = `
+                        <td class="p-4 activity-cell" data-label="Aktivitas">
+                            <span class="font-medium text-gray-800">${index + 1}. ${a.name}</span>
+                        </td>
+                        <td class="p-4 text-center activity-cell" data-label="Freq">
+                            <span class="inline-block bg-gray-100 px-3 py-1 rounded-md font-bold text-gray-700">${a.frequency}x</span>
+                        </td>
+                        <td class="p-4 text-center activity-cell" data-label="Menit/Freq">
+                            <span class="text-gray-600">${a.timePerFreq} mnt</span>
+                        </td>
+                        <td class="p-4 text-center activity-cell" data-label="Total">
+                            <span class="font-bold text-maroon-700">${total} mnt</span>
+                        </td>
+                        <td class="p-4 text-right action-cell print-hide">
+                            <button onclick="editActivity('${a.id}')" class="text-blue-500 hover:bg-blue-50 p-2 rounded transition"><i class="fas fa-edit"></i></button>
+                            <button onclick="deleteActivity('${a.id}')" class="text-red-500 hover:bg-red-50 p-2 rounded transition"><i class="fas fa-trash"></i></button>
+                        </td>
+                    `;
+                    list.appendChild(tr);
+                });
+            }
+
+            // Update Bottom Bar Target
+            document.getElementById('totalTimeDisplay').innerText = totalMins;
+            const badge = document.getElementById('statusBadge');
+            
+            if (totalMins === 420) {
+                badge.className = "px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700";
+                badge.innerText = "Sempurna (420 Menit)";
+            } else if (totalMins > 420) {
+                badge.className = "px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700";
+                badge.innerText = `Kelebihan ${totalMins - 420} Menit`;
+            } else {
+                badge.className = "px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700";
+                badge.innerText = `Kurang ${420 - totalMins} Menit`;
+            }
+        }
+
+        function openAddModal() {
+            document.getElementById('modalTitle').innerText = 'Tambah Aktivitas';
+            document.getElementById('editActivityId').value = '';
+            document.getElementById('activityName').value = '';
+            document.getElementById('activityFreq').value = '1';
+            document.getElementById('activityTime').value = '10';
+            document.getElementById('activityModal').classList.remove('hidden');
+        }
+
+        function editActivity(id) {
+            const a = activities.find(act => act.id === id);
+            if(!a) return;
+            document.getElementById('modalTitle').innerText = 'Edit Aktivitas';
+            document.getElementById('editActivityId').value = a.id;
+            document.getElementById('activityName').value = a.name;
+            document.getElementById('activityFreq').value = a.frequency;
+            document.getElementById('activityTime').value = a.timePerFreq;
+            document.getElementById('activityModal').classList.remove('hidden');
+        }
+
+        function saveActivity() {
+            const id = document.getElementById('editActivityId').value;
+            const name = document.getElementById('activityName').value.trim();
+            const freq = parseInt(document.getElementById('activityFreq').value);
+            const time = parseInt(document.getElementById('activityTime').value);
+
+            if(!name || isNaN(freq) || isNaN(time)) {
+                showToast('Mohon lengkapi semua data dengan benar!', true);
+                return;
+            }
+
+            if(id) {
+                const index = activities.findIndex(a => a.id === id);
+                if(index > -1) {
+                    activities[index] = { ...activities[index], name, frequency: freq, timePerFreq: time };
+                }
+            } else {
+                activities.push({
+                    id: generateId(),
+                    workerId: currentWorkerId,
+                    name, frequency: freq, timePerFreq: time
+                });
+            }
+
+            saveData();
+            renderActivities();
+            closeModal('activityModal');
+            showToast('Aktivitas berhasil disimpan');
+        }
+
+        function deleteActivity(id) {
+            activities = activities.filter(a => a.id !== id);
+            saveData();
+            renderActivities();
+            showToast('Aktivitas dihapus');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.add('hidden');
+        }
+        function openSettingsModal() {
+            renderSettingsWorkers();
+            document.getElementById('settingsModal').classList.remove('hidden');
+        }
+
+        // Worker Settings
+        function renderSettingsWorkers() {
+            const list = document.getElementById('workersListEdit');
+            list.innerHTML = '';
+            workers.forEach(w => {
+                list.innerHTML += `
+                    <div class="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200">
+                        <span class="text-sm font-medium text-gray-700">${w.name}</span>
+                        ${workers.length > 1 ? `<button onclick="deleteWorker('${w.id}')" class="text-red-500 p-1"><i class="fas fa-trash-alt"></i></button>` : ''}
+                    </div>
+                `;
+            });
+        }
+        
+        function addWorker() {
+            const name = document.getElementById('newWorkerName').value.trim();
+            if(!name) return;
+            workers.push({ id: generateId(), name });
+            document.getElementById('newWorkerName').value = '';
+            saveData();
+            renderSettingsWorkers();
+            renderWorkerTabs();
+            showToast('Pekerja ditambahkan');
+        }
+
+        function addFloor2WorkerTemplate() {
+            const newId = generateId();
+            workers.push({ id: newId, name: 'Pekerja Lantai 2 (Packing & Line)' });
+            
+            // Preset aktivitas khusus Lantai 2 yang pas 420 Menit
+            const floor2Activities = [
+                { id: generateId(), workerId: newId, name: 'Inspeksi awal jalur conveyor lantai 2', frequency: 2, timePerFreq: 25 },
+                { id: generateId(), workerId: newId, name: 'Pengisian bahan baku & kemasan lantai 2', frequency: 3, timePerFreq: 30 },
+                { id: generateId(), workerId: newId, name: 'Kontrol mesin cetak & coding lantai 2', frequency: 4, timePerFreq: 35 },
+                { id: generateId(), workerId: newId, name: 'Input data produksi digital lantai 2', frequency: 2, timePerFreq: 35 },
+                { id: generateId(), workerId: newId, name: 'Rekapitulasi dan kebersihan area lantai 2', frequency: 1, timePerFreq: 70 }
+            ];
+
+            activities.push(...floor2Activities);
+            saveData();
+            renderSettingsWorkers();
+            renderWorkerTabs();
+            renderActivities();
+            showToast('Pekerja Lantai 2 berhasil ditambahkan (Total 420 Menit)');
+        }
+
+        function deleteWorker(id) {
+            if(workers.length <= 1) return;
+            workers = workers.filter(w => w.id !== id);
+            activities = activities.filter(a => a.workerId !== id);
+            if(currentWorkerId === id) currentWorkerId = workers[0].id;
+            saveData();
+            renderSettingsWorkers();
+            renderWorkerTabs();
+            renderActivities();
+            showToast('Pekerja dihapus');
+        }
+
+        function saveApiUrl() {
+            apiUrl = document.getElementById('apiUrlInput').value.trim();
+            localStorage.setItem('gwip_api', apiUrl);
+            showToast('URL API Tersimpan');
+        }
+
+        function exportToPDF() {
+            const curWorker = workers.find(w => w.id === currentWorkerId);
+            const element = document.getElementById('report-container');
+            const opt = {
+                margin:       10,
+                filename:     `Laporan_GWIP_${curWorker.name}_${new Date().toISOString().slice(0,10)}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            
+            showToast('Mempersiapkan PDF...');
+            
+            // Add a temporary title for PDF
+            const titleEl = document.createElement('h1');
+            titleEl.className = "text-2xl font-bold text-center text-maroon-800 mb-6 hidden-on-screen";
+            titleEl.innerText = `Laporan Aktivitas GWIP Lantai 1\nTanggal: ${new Date().toLocaleDateString('id-ID')}`;
+            element.insertBefore(titleEl, element.firstChild);
+
+            const style = document.createElement('style');
+            style.innerHTML = `@media print { .print-hide, .action-cell { display: none !important; } } .hidden-on-screen { display: block; }`;
+            document.head.appendChild(style);
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                element.removeChild(titleEl);
+                document.head.removeChild(style);
+                showToast('PDF Berhasil Diunduh');
+            });
+        }
+
+        function shareWhatsApp() {
+            const curWorker = workers.find(w => w.id === currentWorkerId);
+            const workerActivities = activities.filter(a => a.workerId === currentWorkerId);
+            
+            let text = `*Laporan Aktivitas GWIP Lantai 1*\n`;
+            text += `*Tanggal:* ${new Date().toLocaleDateString('id-ID')}\n`;
+            text += `*Pekerja:* ${curWorker.name}\n\n`;
+            text += `*Rincian Aktivitas:*\n`;
+            
+            let total = 0;
+            workerActivities.forEach((a, i) => {
+                const actTotal = a.frequency * a.timePerFreq;
+                total += actTotal;
+                text += `${i+1}. ${a.name}\n   └ ${a.frequency}x @ ${a.timePerFreq}mnt = ${actTotal} mnt\n`;
+            });
+            
+            text += `\n*Total Waktu:* ${total} Menit\n`;
+            
+            const encodedText = encodeURIComponent(text);
+            window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+        }
+
+        async function syncToSpreadsheet() {
+            if(!apiUrl) {
+                openSettingsModal();
+                showToast('Silahkan masukkan URL API Spreadsheet terlebih dahulu!', true);
+                return;
+            }
+
+            const btn = document.getElementById('syncBtn');
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Mengirim Data...`;
+            btn.disabled = true;
+
+            // Prepare flattened data for Spreadsheet
+            const payload = [];
+            workers.forEach(w => {
+                const wActs = activities.filter(a => a.workerId === w.id);
+                wActs.forEach(a => {
+                    payload.push({
+                        workerName: w.name,
+                        activity: a.name,
+                        frequency: a.frequency,
+                        timePerFreq: a.timePerFreq,
+                        totalTime: a.frequency * a.timePerFreq
+                    });
+                });
+            });
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    body: JSON.stringify(payload),
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' } // text/plain to avoid CORS preflight issues with AppScript
+                });
+                const result = await response.json();
+                if(result.status === 'success') {
+                    showToast('Data berhasil di-sync ke Google Sheets!');
+                } else {
+                    throw new Error("Format response salah");
+                }
+            } catch (error) {
+                showToast('Gagal Sync. Pastikan URL Apps Script benar dan di-deploy Anyone.', true);
+                console.error(error);
+            } finally {
+                btn.innerHTML = `<i class="fas fa-cloud-upload-alt"></i> Sync ke Google Spreadsheet`;
+                btn.disabled = false;
+            }
+        }
+
+        // Dynamically generating PWA manifest for Single File constraint
+        const manifestData = {
+            name: "GWIP Activity Logger",
+            short_name: "GWIP Log",
+            start_url: ".",
+            display: "standalone",
+            background_color: "#f3f4f6",
+            theme_color: "#a21d1d",
+            description: "Aplikasi pencatat aktivitas pekerja GWIP",
+            icons: [
+                {
+                    src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23a21d1d' rx='100'/%3E%3Cpath fill='white' d='M256 96c-88.4 0-160 71.6-160 160s71.6 160 160 160 160-71.6 160-160S344.4 96 256 96zm0 288c-70.7 0-128-57.3-128-128S185.3 128 256 128s128 57.3 128 128-57.3 128-128 128zm64-136h-48V168h-32v96h80v-16z'/%3E%3C/svg%3E",
+                    sizes: "512x512",
+                    type: "image/svg+xml",
+                    purpose: "any maskable"
+                }
+            ]
+        };
+        const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
+        document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
+
+        // Dynamic Service Worker Injection
+        const swCode = `
+            const CACHE_NAME = 'gwip-cache-v1';
+            self.addEventListener('install', event => {
+                self.skipWaiting();
+            });
+            self.addEventListener('activate', event => {
+                event.waitUntil(clients.claim());
+            });
+            self.addEventListener('fetch', event => {
+                if (event.request.method === 'GET') {
+                    event.respondWith(
+                        caches.match(event.request).then(response => {
+                            return response || fetch(event.request).then(fetchRes => {
+                                return caches.open(CACHE_NAME).then(cache => {
+                                    if(event.request.url.startsWith('http')) {
+                                        cache.put(event.request, fetchRes.clone());
+                                    }
+                                    return fetchRes;
+                                });
+                            });
+                        }).catch(() => new Response('Offline Mode'))
+                    );
+                }
+            });
+        `;
+        const swBlob = new Blob([swCode], {type: 'application/javascript'});
+        const swUrl = URL.createObjectURL(swBlob);
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register(swUrl)
+                    .then(reg => console.log('Service Worker terdaftar di scope:', reg.scope))
+                    .catch(err => console.log('Pendaftaran Service Worker gagal:', err));
+            });
+        }
+
+        // Run app init
+        initApp();
+    </script>
+</body>
+</html>
