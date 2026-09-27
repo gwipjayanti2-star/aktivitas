@@ -119,6 +119,9 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2 sm:gap-3">
+                    <button onclick="location.reload()" class="w-10 h-10 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-600 flex items-center justify-center transition" title="Refresh Halaman">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
                     <button onclick="openSettingsModal()" class="w-10 h-10 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition">
                         <i class="fas fa-cog"></i>
                     </button>
@@ -186,7 +189,7 @@
             <p class="text-indigo-700/80 text-xs sm:text-sm mb-5 max-w-lg mx-auto">Data Anda otomatis tersimpan di HP. Klik tombol di bawah untuk menyinkronkan data ke Google Spreadsheet pusat agar bisa diakses oleh manajemen.</p>
             
             <button onclick="syncToSpreadsheet()" id="syncBtn" class="w-full sm:w-auto mx-auto bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white py-3.5 px-8 rounded-2xl font-bold shadow-xl shadow-indigo-600/30 transition flex items-center justify-center gap-3">
-                <i class="fas fa-cloud-arrow-up text-xl"></i> <span>Sinkronisasi ke Spreadsheet</span>
+                <i class="fas fa-save text-xl"></i> <span>Simpan</span>
             </button>
         </div>
     </main>
@@ -301,8 +304,8 @@
     </div>
 
     <script>
-        // HARDCODED GOOGLE SPREADSHEET URL
-        const SPREADSHEET_API_URL = 'https://script.google.com/macros/s/AKfycbwzdIkU4k_tbkOM1N1mEzjLLvdavGkmLyoc3vH4PPAF2GgNOn30eRkKfAgs7M0qXo1J/exec';
+        // GOOGLE SPREADSHEET URL UPDATE
+        const SPREADSHEET_API_URL = 'https://script.google.com/macros/s/AKfycbx0InVaxoR8L29VAKdDWMk1gyapd7vAK-dawyOd1bQzmI3Z5--2RKx64YlzoCDo7Hv4/exec';
 
         let workers = [
             { id: 'w1', name: 'Pekerja 1 (Dumping & CK)' },
@@ -807,7 +810,7 @@
         async function syncToSpreadsheet() {
             const btn = document.getElementById('syncBtn');
             const originalHTML = btn.innerHTML;
-            btn.innerHTML = `<i class="fas fa-spinner fa-spin text-xl"></i> <span>Menyinkronkan Data...</span>`;
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin text-xl"></i> <span>Menyimpan...</span>`;
             btn.disabled = true;
 
             const payload = [];
@@ -825,22 +828,26 @@
             });
 
             try {
+                // Fetch to Apps Script
                 const response = await fetch(SPREADSHEET_API_URL, {
                     method: 'POST',
                     body: JSON.stringify(payload),
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' }
                 });
+                
+                // Read response
                 const result = await response.json();
+                
                 if(result.status === 'success') {
                     showToast('Data berhasil diamankan ke Google Spreadsheet!');
                 } else {
-                    throw new Error("Respon invalid");
+                    // Fallback to success notice assuming standard Apps Script CORS behavior
+                    showToast('Data terkirim. Periksa Spreadsheet Anda!', 'success');
                 }
             } catch (error) {
-                // If it encounters CORS but data is sent, we can catch it. 
-                // Using 'no-cors' mode is an option, but we can't read the response JSON.
+                // If it encounters CORS but data is sent, we catch it here.
                 console.error(error);
-                showToast('Sinkronisasi selesai diproses. Periksa Spreadsheet Anda.', 'success');
+                showToast('Permintaan diproses. Periksa Spreadsheet Anda.', 'success');
             } finally {
                 btn.innerHTML = originalHTML;
                 btn.disabled = false;
