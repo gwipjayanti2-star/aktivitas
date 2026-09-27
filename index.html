@@ -2,12 +2,22 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sistem Laporan Aktivitas GWIP</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#a21d1d">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="GWIP Tracker">
+    
+    <!-- Dynamic Manifest Link -->
+    <link id="pwaManifest" rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIlNpc3RlbSBMb3BvcmFubiBha3Rpdml0YXMgR1dJUCIsCiAgInNob3J0X25hbWUiOiAiR1dJUCBUcmFja2VyIiwKICAic3RhcnRfdXJsIjogIi8iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNmOGZhZmMiLAogICJ0aGVtZV9jb2xvciI6ICIjYTIxZDFkIiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiaHR0cHM6Ly9wbGFjZWhvbGQuY28vMTkyLzE5Mi9hMmFjMWQvd2hpdGU/dGV4dD1HV0lQIiwKICAgICAgInR5c2UiOiAiaW1hZ2UvcG5nIiwKICAgICAgInNpemVzIjogIjE5MngxOTIiCiAgICB9LAogICAgewogICAgICAic3JjIjogImh0dHBzOi8vcwbGFjZWhvbGQuY28vNTEyLzUxMi9hMmFjMWQvd2hpdGU/dGV4dD1HV0lQIiwKICAgICAgInR5c2UiOiAiaW1hZ2UvcG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiCiAgICB9CiAgXQp9">
+    
+    <!-- Tailwind CSS and Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
     <script>
         tailwind.config = {
@@ -32,11 +42,11 @@
 
         @media (max-width: 768px) {
             .desktop-table { display: none; }
-            .mobile-cards { display: flex; flex-direction: column; gap: 1rem; }
-            .activity-card { background: white; border-radius: 1rem; padding: 1.25rem; box-shadow: 0 2px 10px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 0.75rem; }
-            .card-label { font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
+            .mobile-cards { display: flex; flex-direction: column; gap: 0.85rem; }
+            .activity-card { background: white; border-radius: 1.25rem; padding: 1.15rem; box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid #f1f5f9; display: flex; flex-direction: column; gap: 0.75rem; }
+            .card-label { font-size: 0.7rem; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; }
             .card-value { font-size: 0.875rem; font-weight: 600; color: #1e293b; }
-            .card-actions { border-top: 1px solid #f1f5f9; margin-top: 0.5rem; padding-top: 1rem; display: flex; justify-content: flex-end; gap: 0.5rem; }
+            .card-actions { border-top: 1px solid #f1f5f9; margin-top: 0.5rem; padding-top: 0.75rem; display: flex; justify-content: flex-end; gap: 0.5rem; }
         }
         @media (min-width: 769px) {
             .mobile-cards { display: none; }
@@ -45,153 +55,159 @@
 
         .toast-enter { transform: translate(-50%, 0); opacity: 1; }
         .toast-exit { transform: translate(-50%, -150%); opacity: 0; }
+        .restricted-hidden { display: none !important; }
+        .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
     </style>
 </head>
-<body class="text-slate-800 pb-32">
-    <!-- Navbar -->
+<body class="text-slate-800 pb-40">
     <nav class="glass-header sticky top-0 z-40 shadow-sm">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16 sm:h-20">
                 <div class="flex items-center gap-3 sm:gap-4">
-                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-brand-700 text-white flex items-center justify-center shadow-lg shadow-brand-700/30">
+                    <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-brand-700 text-white flex items-center justify-center shadow-lg shadow-brand-700/30">
                         <i class="fas fa-layer-group text-lg sm:text-xl"></i>
                     </div>
                     <div>
                         <h1 class="font-extrabold text-base sm:text-xl text-slate-900 leading-tight">GWIP Tracker</h1>
-                        <p class="text-xs sm:text-sm font-medium text-slate-500">Sistem Sinkronisasi Cloud</p>
+                        <p class="text-xs sm:text-sm font-medium text-slate-500">Sistem Laporan Aktivitas</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-2 sm:gap-3">
-                    <button onclick="fetchFromSpreadsheet()" id="refreshBtnTop" class="w-10 h-10 rounded-full bg-blue-100 hover:bg-blue-200 text-blue-600 flex items-center justify-center transition" title="Refresh / Tarik Data Cloud">
+                    <!-- PWA Install Button (hidden until prompt is ready) -->
+                    <button id="installPwaBtn" onclick="installPWA()" class="hidden px-3.5 py-2.5 rounded-2xl bg-brand-50 hover:bg-brand-100 text-brand-700 text-xs sm:text-sm font-bold flex items-center gap-2 transition shadow-sm border border-brand-200" title="Install Aplikasi">
+                        <i class="fas fa-download"></i>
+                        <span class="hidden sm:inline">Install PWA</span>
+                    </button>
+                    <!-- Mode Toggle Button -->
+                    <button onclick="openModeModal()" id="modeIndicatorBtn" class="px-3.5 py-2.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold flex items-center gap-2 transition shadow-sm border border-slate-200" title="Ubah Mode Akses">
+                        <i id="modeIcon" class="fas fa-eye text-blue-600"></i>
+                        <span id="modeText">Mode Lihat</span>
+                    </button>
+                    <button onclick="fetchFromSpreadsheet()" id="refreshBtnTop" class="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition shadow-sm border border-slate-200" title="Refresh / Tarik Data Cloud">
                         <i class="fas fa-sync-alt"></i>
                     </button>
-                    <button onclick="shareWhatsApp()" class="w-10 h-10 rounded-full bg-emerald-100 hover:bg-emerald-200 text-emerald-600 flex items-center justify-center transition">
+                    <button onclick="shareWhatsApp()" class="w-10 h-10 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-600 flex items-center justify-center transition shadow-sm border border-emerald-100" title="Bagikan ke WhatsApp">
                         <i class="fab fa-whatsapp text-lg"></i>
                     </button>
                 </div>
             </div>
             
             <!-- Worker Tabs -->
-            <div id="workerTabs" class="flex overflow-x-auto hide-scroll gap-2 pb-4 pt-2">
+            <div id="workerTabs" class="flex overflow-x-auto hide-scroll gap-2.5 pb-4 pt-2">
                 <!-- Populated dynamically -->
             </div>
         </div>
     </nav>
 
-    <!-- Main Content -->
-    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
             <div>
-                <span class="text-xs uppercase tracking-wider text-slate-400 font-bold block mb-1">Pekerja Saat Ini</span>
+                <span class="text-[11px] uppercase tracking-wider text-slate-400 font-extrabold block mb-1">Pekerja Saat Ini</span>
                 <div class="flex items-center gap-3">
-                    <h2 class="text-2xl font-extrabold text-slate-800" id="currentWorkerTitle">Memuat...</h2>
-                    <button onclick="openEditWorkerModal()" class="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-700 flex items-center justify-center transition shadow-sm" title="Edit Nama Pekerja">
+                    <h2 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight" id="currentWorkerTitle">Memuat...</h2>
+                    <button onclick="openEditWorkerModal()" id="editWorkerBtn" class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition shadow-sm restricted-hidden" title="Edit Nama Pekerja">
                         <i class="fas fa-pen text-xs"></i>
                     </button>
                 </div>
             </div>
-            <button onclick="openAddModal()" class="w-full sm:w-auto bg-brand-700 hover:bg-brand-800 active:scale-95 text-white px-5 py-3 rounded-2xl text-sm font-bold shadow-lg shadow-brand-700/20 transition flex items-center justify-center gap-2">
-                <i class="fas fa-plus-circle text-lg"></i> <span>Tambah Aktivitas</span>
-            </button>
+            
+            <!-- Action bar with add button -->
+            <div class="flex items-center gap-2.5 w-full sm:w-auto">
+                <button onclick="openAddModal()" id="addActivityBtn" class="w-full sm:w-auto bg-brand-700 hover:bg-brand-800 active:scale-95 text-white px-6 py-3.5 rounded-2xl text-sm font-extrabold shadow-xl shadow-brand-700/20 transition flex items-center justify-center gap-2.5 restricted-hidden">
+                    <i class="fas fa-plus-circle text-lg"></i> <span>Tambah Aktivitas</span>
+                </button>
+            </div>
         </div>
 
         <!-- Data Area -->
         <div id="activityContainer">
             <div id="mobileActivityList" class="mobile-cards"></div>
-            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 overflow-hidden hidden sm:block">
+            <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden hidden sm:block">
                 <table class="desktop-table text-left">
-                    <thead class="bg-slate-50 border-b border-slate-200">
+                    <thead class="bg-slate-50/70 border-b border-slate-100">
                         <tr>
-                            <th class="p-4 font-bold text-slate-500 text-xs uppercase tracking-wider w-1/2">Nama Aktivitas / Tugas</th>
-                            <th class="p-4 font-bold text-slate-500 text-xs uppercase tracking-wider text-center">Frekuensi</th>
-                            <th class="p-4 font-bold text-slate-500 text-xs uppercase tracking-wider text-center">Durasi (Menit)</th>
-                            <th class="p-4 font-bold text-slate-500 text-xs uppercase tracking-wider text-center">Total Menit</th>
-                            <th class="p-4 font-bold text-slate-500 text-xs uppercase tracking-wider text-right">Tindakan</th>
+                            <th class="p-5 font-extrabold text-slate-400 text-[11px] uppercase tracking-wider w-1/2">Nama Aktivitas / Tugas</th>
+                            <th class="p-5 font-extrabold text-slate-400 text-[11px] uppercase tracking-wider text-center">Frekuensi</th>
+                            <th class="p-5 font-extrabold text-slate-400 text-[11px] uppercase tracking-wider text-center">Durasi (Menit)</th>
+                            <th class="p-5 font-extrabold text-slate-400 text-[11px] uppercase tracking-wider text-center">Total Menit</th>
+                            <th id="desktopActionHeader" class="p-5 font-extrabold text-slate-400 text-[11px] uppercase tracking-wider text-right restricted-hidden">Tindakan</th>
                         </tr>
                     </thead>
-                    <tbody id="desktopActivityList" class="divide-y divide-slate-100"></tbody>
+                    <tbody id="desktopActivityList" class="divide-y divide-slate-50"></tbody>
                 </table>
-            </div>
-        </div>
-        
-        <!-- Action Cards: Cloud Sync & Export Controls -->
-        <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <!-- Cloud Sync -->
-            <div class="bg-blue-50 border border-blue-100 rounded-3xl p-5 sm:p-6 text-center flex flex-col justify-center">
-                <div class="mb-5">
-                    <h3 class="text-blue-900 font-bold mb-2">Simpan Laporan ke Database</h3>
-                    <p class="text-blue-700/80 text-xs sm:text-sm max-w-lg mx-auto">Klik tombol di bawah untuk menyimpan / menyinkronkan seluruh data pekerja ke Google Spreadsheet.</p>
-                </div>
-                
-                <button onclick="syncToSpreadsheet()" id="syncBtn" class="w-full sm:w-auto mx-auto bg-blue-600 hover:bg-blue-700 active:scale-95 text-white py-3.5 px-8 rounded-2xl font-bold shadow-xl shadow-blue-600/30 transition flex items-center justify-center gap-3">
-                    <i class="fas fa-cloud-arrow-up text-xl"></i> <span>Simpan Data ke Cloud</span>
-                </button>
-            </div>
-
-            <!-- Export PDF & Excel -->
-            <div class="bg-emerald-50 border border-emerald-100 rounded-3xl p-5 sm:p-6 text-center flex flex-col justify-center">
-                <div class="mb-5">
-                    <h3 class="text-emerald-900 font-bold mb-2">Unduh Laporan (Pekerja Ini)</h3>
-                    <p class="text-emerald-700/80 text-xs sm:text-sm max-w-lg mx-auto">Export rincian aktivitas dan total waktu khusus untuk pekerja yang sedang aktif saat ini.</p>
-                </div>
-                
-                <div class="flex flex-col sm:flex-row justify-center gap-3">
-                    <button onclick="exportToPDF()" class="w-full sm:w-auto bg-rose-600 hover:bg-rose-700 active:scale-95 text-white py-3.5 px-6 rounded-2xl font-bold shadow-lg shadow-rose-600/30 transition flex items-center justify-center gap-2">
-                        <i class="fas fa-file-pdf text-lg"></i> <span>Cetak PDF</span>
-                    </button>
-                    <button onclick="exportToExcel()" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white py-3.5 px-6 rounded-2xl font-bold shadow-lg shadow-emerald-600/30 transition flex items-center justify-center gap-2">
-                        <i class="fas fa-file-excel text-lg"></i> <span>Unduh Excel</span>
-                    </button>
-                </div>
             </div>
         </div>
     </main>
 
-    <!-- Hidden Export Container for PDF Engine -->
-    <div id="pdfExportContainer" style="display: none;"></div>
-
-    <!-- Sticky Bottom Status Bar -->
-    <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-[0_-10px_30px_rgba(0,0,0,0.05)] z-30 pb-safe">
-        <div class="max-w-5xl mx-auto px-4 py-4 flex flex-row items-center justify-between gap-4">
-            <div>
-                <p class="text-[10px] sm:text-xs uppercase tracking-widest text-slate-400 font-bold mb-1">Total Waktu (Pekerja Ini)</p>
-                <div class="flex items-baseline gap-1 sm:gap-2">
-                    <span id="totalTimeDisplay" class="text-2xl sm:text-3xl font-black text-slate-800 leading-none">0</span>
-                    <span class="text-xs sm:text-sm font-semibold text-slate-500"> Mnt</span>
+    <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-100 shadow-[0_-10px_30px_rgba(0,0,0,0.03)] z-30 pb-safe">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 py-4 flex flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-rose-50 text-brand-700 flex items-center justify-center text-xl shadow-sm">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div>
+                    <p class="text-[10px] sm:text-xs uppercase tracking-widest text-slate-400 font-extrabold mb-0.5">Total Waktu Kerja</p>
+                    <div class="flex items-baseline gap-1.5">
+                        <span id="totalTimeDisplay" class="text-2xl sm:text-3xl font-black text-slate-900 leading-none">0</span>
+                        <span class="text-xs font-bold text-slate-500">Menit</span>
+                    </div>
                 </div>
             </div>
-            <div id="statusBadge" class="px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold shadow-sm whitespace-nowrap text-center">
-                Standby
+            
+            <button onclick="syncToSpreadsheet()" id="syncBtn" class="bg-slate-900 hover:bg-slate-800 active:scale-95 text-white py-3.5 px-6 sm:px-8 rounded-2xl font-extrabold text-sm shadow-xl shadow-slate-900/10 transition flex items-center justify-center gap-2.5 restricted-hidden">
+                <i class="fas fa-cloud-arrow-up text-lg text-blue-400"></i> <span>Simpan ke Cloud</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Security Mode Unlock Modal -->
+    <div id="modeModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 transition-opacity">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-center">
+                <h3 class="font-bold text-lg text-slate-800">Mode Akses Aplikasi</h3>
+                <button onclick="closeModal('modeModal')" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition"><i class="fas fa-times"></i></button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div id="modeStatusDesc" class="text-sm text-slate-600 font-medium bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                    Saat ini aplikasi berada dalam <strong>Mode Lihat</strong>.
+                </div>
+                <div id="adminUnlockContainer">
+                    <label class="block text-xs font-bold text-slate-700 mb-2">MASUKKAN PIN AKSES</label>
+                    <input type="password" id="adminPinInput" class="w-full border-slate-200 rounded-2xl p-3.5 bg-slate-50 border focus:border-brand-500 outline-none transition text-sm font-bold tracking-widest text-center" placeholder="••••">
+                </div>
+                <div class="pt-2">
+                    <button id="modeActionBtn" onclick="toggleUserMode()" class="w-full bg-brand-700 hover:bg-brand-800 active:scale-95 text-white font-bold py-3.5 rounded-2xl shadow-md transition">Aktifkan Mode Edit</button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Add/Edit Activity Modal -->
     <div id="activityModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center sm:p-4 transition-opacity">
-        <div class="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-md overflow-hidden animate-slide-up sm:animate-zoom-in">
+        <div class="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-md overflow-hidden">
             <div class="p-5 sm:p-6 border-b border-slate-100 flex justify-between items-center">
                 <h3 class="font-bold text-lg text-slate-800" id="modalTitle">Tambah Aktivitas</h3>
-                <button onclick="closeModal('activityModal')" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition"><i class="fas fa-times"></i></button>
+                <button onclick="closeModal('activityModal')" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-5 sm:p-6 space-y-5">
                 <input type="hidden" id="editActivityId">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-2">NAMA AKTIVITAS</label>
-                    <input type="text" id="activityName" class="w-full border-slate-200 rounded-xl p-3.5 bg-slate-50 border focus:border-brand-500 outline-none transition text-sm font-medium" placeholder="Contoh: Inspeksi jalur...">
+                    <input type="text" id="activityName" class="w-full border-slate-200 rounded-2xl p-3.5 bg-slate-50 border focus:border-brand-500 outline-none transition text-sm font-medium" placeholder="Contoh: Inspeksi jalur...">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2">FREKUENSI (KALI)</label>
-                        <input type="number" id="activityFreq" min="1" value="1" class="w-full border-slate-200 rounded-xl p-3.5 bg-slate-50 border focus:border-brand-500 outline-none transition text-sm font-medium">
+                        <input type="number" id="activityFreq" min="1" value="1" class="w-full border-slate-200 rounded-2xl p-3.5 bg-slate-50 border focus:border-brand-500 outline-none transition text-sm font-medium">
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-slate-700 mb-2">WAKTU/FREQ (MENIT)</label>
-                        <input type="number" id="activityTime" min="1" value="15" class="w-full border-slate-200 rounded-xl p-3.5 bg-slate-50 border focus:border-brand-500 outline-none transition text-sm font-medium">
+                        <input type="number" id="activityTime" min="1" value="15" class="w-full border-slate-200 rounded-2xl p-3.5 bg-slate-50 border focus:border-brand-500 outline-none transition text-sm font-medium">
                     </div>
                 </div>
                 <div class="pt-2">
-                    <button onclick="saveActivity()" class="w-full bg-brand-700 hover:bg-brand-800 active:scale-95 text-white font-bold py-3.5 rounded-xl shadow-md transition">Simpan Aktivitas</button>
+                    <button onclick="saveActivity()" class="w-full bg-brand-700 hover:bg-brand-800 active:scale-95 text-white font-bold py-3.5 rounded-2xl shadow-md transition">Simpan Aktivitas</button>
                 </div>
             </div>
         </div>
@@ -199,18 +215,18 @@
 
     <!-- Edit Worker Modal -->
     <div id="workerModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 transition-opacity">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-slide-up sm:animate-zoom-in">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
             <div class="p-5 border-b border-slate-100 flex justify-between items-center">
                 <h3 class="font-bold text-lg text-slate-800">Edit Nama Pekerja</h3>
-                <button onclick="closeModal('workerModal')" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 hover:text-slate-800 transition"><i class="fas fa-times"></i></button>
+                <button onclick="closeModal('workerModal')" class="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-6 space-y-4">
                 <div>
                     <label class="block text-xs font-bold text-slate-700 mb-2">NAMA PEKERJA BARU</label>
-                    <input type="text" id="newWorkerNameInput" class="w-full border-slate-200 rounded-xl p-3.5 bg-slate-50 border focus:border-brand-500 outline-none transition text-sm font-medium" placeholder="Masukkan nama pekerja...">
+                    <input type="text" id="newWorkerNameInput" class="w-full border-slate-200 rounded-2xl p-3.5 bg-slate-50 border focus:border-brand-500 outline-none transition text-sm font-medium" placeholder="Masukkan nama pekerja...">
                 </div>
                 <div class="pt-2">
-                    <button onclick="saveWorkerName()" class="w-full bg-brand-700 hover:bg-brand-800 active:scale-95 text-white font-bold py-3.5 rounded-xl shadow-md transition">Simpan Nama</button>
+                    <button onclick="saveWorkerName()" class="w-full bg-brand-700 hover:bg-brand-800 active:scale-95 text-white font-bold py-3.5 rounded-2xl shadow-md transition">Simpan Nama</button>
                 </div>
             </div>
         </div>
@@ -224,27 +240,78 @@
 
     <!-- Confirm Modal -->
     <div id="confirmModal" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm hidden z-[100] flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden p-6 text-center">
-            <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-6 text-center">
+            <div class="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-4 text-2xl">
                 <i class="fas fa-exclamation-triangle"></i>
             </div>
             <h3 class="font-bold text-lg text-slate-800 mb-2" id="confirmTitle">Konfirmasi</h3>
             <p class="text-slate-500 text-sm mb-6" id="confirmMessage">Apakah Anda yakin?</p>
             <div class="flex gap-3 justify-center">
-                <button onclick="closeConfirm()" class="px-5 py-2.5 bg-slate-100 text-slate-700 rounded-xl font-bold text-sm transition">Batal</button>
-                <button id="confirmYesBtn" class="px-5 py-2.5 bg-rose-600 text-white rounded-xl font-bold text-sm transition">Ya, Hapus</button>
+                <button onclick="closeConfirm()" class="px-5 py-3 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-2xl font-bold text-sm transition">Batal</button>
+                <button id="confirmYesBtn" class="px-5 py-3 bg-rose-600 hover:bg-rose-700 text-white rounded-2xl font-bold text-sm transition">Ya, Hapus</button>
             </div>
         </div>
     </div>
 
     <script>
-        // Kosongkan pekerja bawaan, akan diganti sepenuhnya dari Spreadsheet
         let workers = [];
         let activities = [];
         let currentWorkerId = null;
+        let isUserMode = false;
+        let deferredPrompt = null;
+        const APP_PIN = "1234";
         
-        // MASUKKAN URL WEB APP GOOGLE SCRIPT DI BAWAH INI
         const SPREADSHEET_API_URL = 'https://script.google.com/macros/s/AKfycbzODRrSlZ-Kl3VTgHQhGj-xw-q0tLfDnNYXEfT9mBoFWIkkKKMCMmXzVsS0v85ZPgiC/exec'; 
+
+        // Register Service Worker for PWA Offline Functionality
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                const swCode = `
+                    const CACHE_NAME = 'gwip-pwa-v1';
+                    const urlsToCache = ['/', window.location.href];
+                    self.addEventListener('install', event => {
+                        event.waitUntil(
+                            caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+                        );
+                    });
+                    self.addEventListener('fetch', event => {
+                        event.respondWith(
+                            caches.match(event.request).then(response => {
+                                return response || fetch(event.request).catch(() => caches.match('/'));
+                            })
+                        );
+                    });
+                `;
+                const blob = new Blob([swCode], { type: 'application/javascript' });
+                const swUrl = URL.createObjectURL(blob);
+                navigator.serviceWorker.register(swUrl)
+                    .then(() => console.log('PWA Service Worker Terdaftar'))
+                    .catch(err => console.log('SW Gagal:', err));
+            });
+        }
+
+        // PWA Installation prompt listener
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            const installBtn = document.getElementById('installPwaBtn');
+            if (installBtn) installBtn.classList.remove('hidden');
+        });
+
+        function installPWA() {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                deferredPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        showToast('Aplikasi berhasil diinstall!', 'success');
+                    }
+                    deferredPrompt = null;
+                    document.getElementById('installPwaBtn').classList.add('hidden');
+                });
+            } else {
+                showToast('Aplikasi sudah terpasang atau browser Anda tidak mendukung prompt instan.', 'info');
+            }
+        }
 
         function initApp() {
             const savedWorkers = localStorage.getItem('gwip_workers_v2');
@@ -258,10 +325,15 @@
                 activities = JSON.parse(savedActivities);
             }
 
+            const savedMode = sessionStorage.getItem('gwip_user_mode');
+            if(savedMode === 'true') {
+                isUserMode = true;
+            }
+
+            updateUIMode();
             renderWorkerTabs();
             renderActivities();
             
-            // Otomatis sinkronisasi dengan Spreadsheet saat web pertama kali dibuka
             setTimeout(() => {
                 fetchFromSpreadsheet();
             }, 800);
@@ -270,6 +342,74 @@
         function saveLocalData() {
             localStorage.setItem('gwip_workers_v2', JSON.stringify(workers));
             localStorage.setItem('gwip_activities_v2', JSON.stringify(activities));
+        }
+
+        function updateUIMode() {
+            const modeIcon = document.getElementById('modeIcon');
+            const modeText = document.getElementById('modeText');
+            const addActivityBtn = document.getElementById('addActivityBtn');
+            const editWorkerBtn = document.getElementById('editWorkerBtn');
+            const syncBtn = document.getElementById('syncBtn');
+            const desktopActionHeader = document.getElementById('desktopActionHeader');
+
+            if (isUserMode) {
+                modeIcon.className = "fas fa-lock-open text-emerald-600";
+                modeText.innerText = "Mode User (Edit Aktif)";
+                addActivityBtn.classList.remove('restricted-hidden');
+                editWorkerBtn.classList.remove('restricted-hidden');
+                syncBtn.classList.remove('restricted-hidden');
+                desktopActionHeader.classList.remove('restricted-hidden');
+            } else {
+                modeIcon.className = "fas fa-eye text-blue-600";
+                modeText.innerText = "Mode Lihat";
+                addActivityBtn.classList.add('restricted-hidden');
+                editWorkerBtn.classList.add('restricted-hidden');
+                syncBtn.classList.add('restricted-hidden');
+                desktopActionHeader.classList.add('restricted-hidden');
+            }
+        }
+
+        function openModeModal() {
+            const modeStatusDesc = document.getElementById('modeStatusDesc');
+            const adminUnlockContainer = document.getElementById('adminUnlockContainer');
+            const modeActionBtn = document.getElementById('modeActionBtn');
+            document.getElementById('adminPinInput').value = '';
+
+            if (isUserMode) {
+                modeStatusDesc.innerHTML = "Aplikasi sedang dalam <strong>Mode User (Edit Terbuka)</strong>. Anda dapat mengunci kembali ke Mode Lihat.";
+                adminUnlockContainer.classList.add('hidden');
+                modeActionBtn.innerText = "Kunci Kembali (Mode Lihat)";
+                modeActionBtn.className = "w-full bg-slate-700 hover:bg-slate-800 active:scale-95 text-white font-bold py-3.5 rounded-2xl shadow-md transition";
+            } else {
+                modeStatusDesc.innerHTML = "Aplikasi dalam <strong>Mode Lihat</strong>. Masukkan PIN untuk membuka akses edit & input data.";
+                adminUnlockContainer.classList.remove('hidden');
+                modeActionBtn.innerText = "Buka Mode User";
+                modeActionBtn.className = "w-full bg-brand-700 hover:bg-brand-800 active:scale-95 text-white font-bold py-3.5 rounded-2xl shadow-md transition";
+            }
+            document.getElementById('modeModal').classList.remove('hidden');
+        }
+
+        function toggleUserMode() {
+            if (isUserMode) {
+                isUserMode = false;
+                sessionStorage.setItem('gwip_user_mode', 'false');
+                updateUIMode();
+                renderActivities();
+                closeModal('modeModal');
+                showToast('Kembali ke Mode Lihat (Akses dikunci)', 'info');
+            } else {
+                const pin = document.getElementById('adminPinInput').value.trim();
+                if (pin === APP_PIN) {
+                    isUserMode = true;
+                    sessionStorage.setItem('gwip_user_mode', 'true');
+                    updateUIMode();
+                    renderActivities();
+                    closeModal('modeModal');
+                    showToast('Mode User Berhasil Dibuka!', 'success');
+                } else {
+                    showToast('PIN Akses Salah!', 'error');
+                }
+            }
         }
 
         function showToast(msg, type = 'success') {
@@ -315,7 +455,7 @@
             workers.forEach(w => {
                 const isActive = w.id === currentWorkerId;
                 const btn = document.createElement('button');
-                btn.className = `whitespace-nowrap px-5 py-2.5 rounded-full text-sm font-bold transition shadow-sm ${isActive ? 'bg-brand-700 text-white shadow-md' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`;
+                btn.className = `whitespace-nowrap px-5 py-2.5 rounded-2xl text-sm font-bold transition shadow-sm ${isActive ? 'bg-brand-700 text-white shadow-md shadow-brand-700/20' : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'}`;
                 btn.innerText = w.name;
                 btn.onclick = () => { currentWorkerId = w.id; renderWorkerTabs(); renderActivities(); };
                 tabsContainer.appendChild(btn);
@@ -335,56 +475,66 @@
             let totalMins = 0;
 
             if (workerActivities.length === 0) {
-                const emptyState = `<div class="text-center py-12 bg-white rounded-2xl border border-slate-200"><div class="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-3"><i class="fas fa-clipboard-list text-2xl text-slate-300"></i></div><p class="text-slate-500 font-medium">Belum ada aktivitas tercatat.</p></div>`;
-                desktopList.innerHTML = `<tr><td colspan="5">${emptyState}</td></tr>`;
+                const emptyState = `<div class="text-center py-16 bg-white rounded-3xl border border-slate-100"><div class="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-inner"><i class="fas fa-clipboard-list text-2xl text-slate-300"></i></div><p class="text-slate-400 font-bold text-sm">Belum ada aktivitas tercatat untuk pekerja ini.</p></div>`;
+                desktopList.innerHTML = `<tr><td colspan="${isUserMode ? 5 : 4}">${emptyState}</td></tr>`;
                 mobileList.innerHTML = emptyState;
             } else {
                 workerActivities.forEach((a, index) => {
                     const total = a.frequency * a.timePerFreq;
                     totalMins += total;
                     
-                    const tr = document.createElement('tr');
-                    tr.innerHTML = `
-                        <td class="p-4 font-semibold text-slate-800 text-sm">${index + 1}. ${a.name}</td>
-                        <td class="p-4 text-center"><span class="inline-block bg-slate-100 text-slate-700 px-3 py-1 rounded-lg font-bold text-xs">${a.frequency}x</span></td>
-                        <td class="p-4 text-center font-medium text-slate-600">${a.timePerFreq} mnt</td>
-                        <td class="p-4 text-center font-bold text-brand-700">${total} mnt</td>
-                        <td class="p-4 text-right">
-                            <div class="flex items-center justify-end gap-2">
-                                <button onclick="editActivity('${a.id}')" class="text-blue-600 hover:bg-blue-50 w-8 h-8 rounded-full transition flex items-center justify-center"><i class="fas fa-pen text-sm"></i></button>
-                                <button onclick="deleteActivity('${a.id}')" class="text-rose-600 hover:bg-rose-50 w-8 h-8 rounded-full transition flex items-center justify-center"><i class="fas fa-trash text-sm"></i></button>
+                    let actionTd = '';
+                    let cardActionsHtml = '';
+                    if (isUserMode) {
+                        actionTd = `
+                            <td class="p-5 text-right">
+                                <div class="flex items-center justify-end gap-1.5">
+                                    <button onclick="editActivity('${a.id}')" class="text-blue-600 bg-blue-50 hover:bg-blue-100 w-9 h-9 rounded-xl transition flex items-center justify-center shadow-sm" title="Edit"><i class="fas fa-pen text-xs"></i></button>
+                                    <button onclick="deleteActivity('${a.id}')" class="text-rose-600 bg-rose-50 hover:bg-rose-100 w-9 h-9 rounded-xl transition flex items-center justify-center shadow-sm" title="Hapus"><i class="fas fa-trash text-xs"></i></button>
+                                </div>
+                            </td>
+                        `;
+                        cardActionsHtml = `
+                            <div class="card-actions">
+                                <button onclick="editActivity('${a.id}')" class="flex-1 py-2 bg-blue-50 text-blue-600 rounded-xl text-xs font-bold transition hover:bg-blue-100"><i class="fas fa-pen mr-1"></i> Edit</button>
+                                <button onclick="deleteActivity('${a.id}')" class="flex-1 py-2 bg-rose-50 text-rose-600 rounded-xl text-xs font-bold transition hover:bg-rose-100"><i class="fas fa-trash mr-1"></i> Hapus</button>
                             </div>
-                        </td>
+                        `;
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-slate-50/50 transition-colors";
+                    tr.innerHTML = `
+                        <td class="p-5 font-bold text-slate-800 text-sm">${index + 1}. ${a.name}</td>
+                        <td class="p-5 text-center"><span class="inline-block bg-slate-100 text-slate-700 px-3 py-1.5 rounded-xl font-extrabold text-xs shadow-sm">${a.frequency}x</span></td>
+                        <td class="p-5 text-center font-bold text-slate-600">${a.timePerFreq} mnt</td>
+                        <td class="p-5 text-center font-black text-brand-700 text-base">${total} mnt</td>
+                        ${actionTd}
                     `;
                     desktopList.appendChild(tr);
 
                     const card = document.createElement('div');
                     card.className = "activity-card";
                     card.innerHTML = `
-                        <div class="flex items-start gap-3 mb-1">
-                            <div class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-500 shrink-0 mt-0.5">${index + 1}</div>
-                            <h4 class="font-bold text-slate-800 text-sm leading-snug">${a.name}</h4>
+                        <div class="flex items-start gap-3.5 mb-1">
+                            <div class="w-7 h-7 rounded-xl bg-slate-100 flex items-center justify-center text-xs font-black text-slate-600 shrink-0 mt-0.5 shadow-sm">${index + 1}</div>
+                            <h4 class="font-bold text-slate-900 text-sm leading-snug">${a.name}</h4>
                         </div>
-                        <div class="grid grid-cols-2 gap-4 bg-slate-50 p-3 rounded-xl">
-                            <div><span class="card-label block mb-1">Detail</span><span class="card-value">${a.frequency}x @ ${a.timePerFreq}m</span></div>
-                            <div class="text-right"><span class="card-label block mb-1">Subtotal</span><span class="card-value text-brand-700 font-bold">${total} Menit</span></div>
+                        <div class="grid grid-cols-2 gap-3 bg-slate-50/80 p-3 rounded-2xl border border-slate-100">
+                            <div><span class="card-label block mb-1">Detail</span><span class="card-value font-bold">${a.frequency}x @ ${a.timePerFreq}m</span></div>
+                            <div class="text-right"><span class="card-label block mb-1">Subtotal</span><span class="card-value text-brand-700 font-black text-base">${total} Mnt</span></div>
                         </div>
-                        <div class="card-actions">
-                            <button onclick="editActivity('${a.id}')" class="px-4 py-2 bg-blue-50 text-blue-600 rounded-lg text-xs font-bold">Edit</button>
-                            <button onclick="deleteActivity('${a.id}')" class="px-4 py-2 bg-rose-50 text-rose-600 rounded-lg text-xs font-bold">Hapus</button>
-                        </div>
+                        ${cardActionsHtml}
                     `;
                     mobileList.appendChild(card);
                 });
             }
 
             document.getElementById('totalTimeDisplay').innerText = totalMins;
-            const badge = document.getElementById('statusBadge');
-            badge.className = "px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold bg-slate-100 text-slate-700 shadow-sm border border-slate-200";
-            badge.innerHTML = `<i class="fas fa-clock"></i> <span>Aktivitas Tersimpan</span>`;
         }
 
         function openAddModal() {
+            if (!isUserMode) return;
             document.getElementById('modalTitle').innerText = 'Tambah Aktivitas';
             document.getElementById('editActivityId').value = '';
             document.getElementById('activityName').value = '';
@@ -394,6 +544,7 @@
         }
 
         function editActivity(id) {
+            if (!isUserMode) return;
             const a = activities.find(act => act.id === id);
             if(!a) return;
             document.getElementById('modalTitle').innerText = 'Edit Aktivitas';
@@ -405,6 +556,7 @@
         }
 
         function saveActivity() {
+            if (!isUserMode) return;
             const id = document.getElementById('editActivityId').value;
             const name = document.getElementById('activityName').value.trim();
             const freq = parseInt(document.getElementById('activityFreq').value);
@@ -425,7 +577,7 @@
                 activities.push({
                     id: generateId(),
                     workerId: currentWorkerId,
-                    workerName: workers.find(w => w.id === currentWorkerId).name, // Pastikan nama pekerja masuk
+                    workerName: workers.find(w => w.id === currentWorkerId).name,
                     name, frequency: freq, timePerFreq: time
                 });
                 showToast('Aktivitas ditambahkan');
@@ -439,6 +591,7 @@
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
 
         function openEditWorkerModal() {
+            if (!isUserMode) return;
             const curWorker = workers.find(w => w.id === currentWorkerId);
             if(curWorker) {
                 document.getElementById('newWorkerNameInput').value = curWorker.name;
@@ -447,6 +600,7 @@
         }
 
         function saveWorkerName() {
+            if (!isUserMode) return;
             const newName = document.getElementById('newWorkerNameInput').value.trim();
             if(!newName) {
                 showToast('Nama pekerja tidak boleh kosong!', 'error');
@@ -457,7 +611,6 @@
             if(curWorker) {
                 curWorker.name = newName;
                 
-                // Update aktivitas lampau milik pekerja ini dengan nama baru
                 activities = activities.map(a => {
                     if (a.workerId === currentWorkerId) {
                         return { ...a, workerName: newName };
@@ -493,6 +646,7 @@
         });
 
         function deleteActivity(id) {
+            if (!isUserMode) return;
             showConfirm('Hapus Aktivitas', 'Apakah Anda yakin ingin menghapus aktivitas ini?', () => {
                 activities = activities.filter(a => a.id !== id);
                 saveLocalData();
@@ -522,10 +676,8 @@
                 const result = await response.json();
                 
                 if (result.status === 'success') {
-                    // Ambil daftar nama pekerja dari backend Spreadsheet
                     const uniqueWorkerNames = result.workers || [...new Set(result.data.map(item => item.workerName))];
                     
-                    // Timpa/Buat ulang array workers 100% berdasarkan spreadsheet
                     const newWorkers = [];
                     uniqueWorkerNames.forEach(name => {
                         const existing = workers.find(w => w.name === name);
@@ -533,7 +685,6 @@
                     });
                     workers = newWorkers;
 
-                    // Set pekerja pertama sebagai aktif jika saat ini kosong
                     if (!workers.find(w => w.id === currentWorkerId) && workers.length > 0) {
                         currentWorkerId = workers[0].id;
                     }
@@ -561,7 +712,7 @@
                 }
             } catch (error) {
                 console.error(error);
-                showToast('Gagal menarik data. Periksa koneksi/URL Anda.', 'error');
+                showToast('Gagal menarik data. Menggunakan cache offline.', 'info');
             } finally {
                 icon.classList.remove('fa-spin');
                 btn.disabled = false;
@@ -569,11 +720,15 @@
         }
 
         async function syncToSpreadsheet() {
+            if (!isUserMode) {
+                showToast('Akses ditolak! Mode User diperlukan untuk sinkronisasi.', 'error');
+                return;
+            }
             if(!checkUrl()) return;
 
             const btn = document.getElementById('syncBtn');
             const originalHTML = btn.innerHTML;
-            btn.innerHTML = `<i class="fas fa-spinner fa-spin text-xl"></i> <span>Menyimpan...</span>`;
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin text-lg"></i> <span>Menyimpan...</span>`;
             btn.disabled = true;
 
             const payload = [];
@@ -609,167 +764,12 @@
             }
         }
 
-        // --- FUNGSI EXPORT EXCEL ---
-        function exportToExcel() {
-            const curWorker = workers.find(w => w.id === currentWorkerId);
-            const wActs = activities.filter(a => a.workerId === currentWorkerId);
-            
-            if (wActs.length === 0) {
-                showToast(`Tidak ada data aktivitas untuk ${curWorker.name}!`, 'error');
-                return;
-            }
-
-            let detailData = [];
-            let wTotalTime = 0;
-
-            // Membangun struktur data untuk Excel khusus pekerja aktif
-            wActs.forEach((act, idx) => {
-                const actTotal = act.frequency * act.timePerFreq;
-                wTotalTime += actTotal;
-                
-                detailData.push({
-                    "No": idx + 1,
-                    "Aktivitas": act.name,
-                    "Frekuensi (Kali)": act.frequency,
-                    "Waktu per Freq (Menit)": act.timePerFreq,
-                    "Total Waktu (Menit)": actTotal
-                });
-            });
-
-            // Menambahkan Grand Total di baris terakhir
-            detailData.push({
-                "No": "",
-                "Aktivitas": "TOTAL KESELURUHAN WAKTU",
-                "Frekuensi (Kali)": "",
-                "Waktu per Freq (Menit)": "",
-                "Total Waktu (Menit)": wTotalTime
-            });
-
-            // Membuat Workbook dan Sheet
-            const wb = XLSX.utils.book_new();
-            const wsDetails = XLSX.utils.json_to_sheet(detailData);
-
-            // Melebarkan ukuran kolom di Excel
-            wsDetails['!cols'] = [{wch: 5}, {wch: 50}, {wch: 15}, {wch: 25}, {wch: 20}];
-
-            // Memasukkan sheet ke workbook
-            XLSX.utils.book_append_sheet(wb, wsDetails, "Rincian Aktivitas");
-
-            // Membersihkan nama file dari karakter unik agar tidak error
-            const safeName = curWorker.name.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
-            
-            // Mengunduh File Excel
-            XLSX.writeFile(wb, `Laporan_${safeName}_${new Date().toISOString().slice(0,10)}.xlsx`);
-            showToast('Laporan Excel berhasil diunduh!', 'success');
-        }
-
-        // --- FUNGSI EXPORT PDF ---
-        function exportToPDF() {
-            const curWorker = workers.find(w => w.id === currentWorkerId);
-            const wActs = activities.filter(a => a.workerId === currentWorkerId);
-            
-            if (wActs.length === 0) {
-                showToast(`Tidak ada data aktivitas untuk ${curWorker.name}!`, 'error');
-                return;
-            }
-            
-            showToast('Menyiapkan dokumen PDF...', 'info');
-            const container = document.getElementById('pdfExportContainer');
-            const dateStr = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
-            
-            let totalMins = wActs.reduce((sum, a) => sum + (a.frequency * a.timePerFreq), 0);
-            
-            // Generate Kerangka HTML untuk PDF (Hanya 1 Pekerja)
-            let htmlContent = `
-                <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; padding: 20px; color: #1e293b;">
-                    
-                    <!-- Header Dokumen -->
-                    <div style="text-align: center; border-bottom: 3px solid #d93e3e; padding-bottom: 15px; margin-bottom: 30px;">
-                        <h1 style="margin: 0; font-size: 26px; color: #0f172a; font-weight: bold;">Laporan Aktivitas Pekerja GWIP</h1>
-                        <p style="margin: 5px 0 0 0; color: #64748b; font-size: 14px;">Tanggal Cetak: ${dateStr}</p>
-                    </div>
-                    
-                    <!-- Profile Card -->
-                    <div style="background-color: #f8fafc; padding: 15px 20px; margin-bottom: 25px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
-                        <div>
-                            <p style="margin: 0 0 5px 0; font-size: 11px; text-transform: uppercase; font-weight: bold; color: #64748b; letter-spacing: 1px;">Nama Pekerja</p>
-                            <h2 style="margin: 0; font-size: 18px; color: #0f172a;">${curWorker.name}</h2>
-                        </div>
-                        <div style="text-align: right;">
-                            <p style="margin: 0 0 5px 0; font-size: 11px; text-transform: uppercase; font-weight: bold; color: #64748b; letter-spacing: 1px;">Total Waktu (Menit)</p>
-                            <h2 style="margin: 0; font-size: 18px; color: #d93e3e; font-weight: 800;">${totalMins}</h2>
-                        </div>
-                    </div>
-
-                    <h2 style="font-size: 16px; color: #0f172a; margin-bottom: 15px; border-left: 4px solid #059669; padding-left: 10px;">Rincian Aktivitas</h2>
-                    
-                    <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 12px;">
-                        <thead>
-                            <tr style="background-color: #f1f5f9; color: #475569;">
-                                <th style="border: 1px solid #e2e8f0; padding: 10px; text-align: center; width: 5%;">No</th>
-                                <th style="border: 1px solid #e2e8f0; padding: 10px; text-align: left; width: 45%;">Nama Aktivitas / Tugas</th>
-                                <th style="border: 1px solid #e2e8f0; padding: 10px; text-align: center; width: 15%;">Frekuensi</th>
-                                <th style="border: 1px solid #e2e8f0; padding: 10px; text-align: center; width: 15%;">Durasi/Freq</th>
-                                <th style="border: 1px solid #e2e8f0; padding: 10px; text-align: center; width: 20%;">Total (Mnt)</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-            `;
-                
-            wActs.forEach((act, idx) => {
-                htmlContent += `
-                    <tr>
-                        <td style="border: 1px solid #e2e8f0; padding: 10px; text-align: center;">${idx + 1}</td>
-                        <td style="border: 1px solid #e2e8f0; padding: 10px;">${act.name}</td>
-                        <td style="border: 1px solid #e2e8f0; padding: 10px; text-align: center;">${act.frequency}x</td>
-                        <td style="border: 1px solid #e2e8f0; padding: 10px; text-align: center;">${act.timePerFreq}</td>
-                        <td style="border: 1px solid #e2e8f0; padding: 10px; text-align: center; font-weight: bold; color: #d93e3e;">${act.frequency * act.timePerFreq}</td>
-                    </tr>
-                `;
-            });
-            
-            htmlContent += `
-                        </tbody>
-                        <tfoot>
-                            <tr style="background-color: #f8fafc; font-weight: bold; color: #0f172a;">
-                                <td colspan="4" style="border: 1px solid #e2e8f0; padding: 10px; text-align: right;">TOTAL WAKTU</td>
-                                <td style="border: 1px solid #e2e8f0; padding: 10px; text-align: center; color: #d93e3e;">${totalMins} Menit</td>
-                            </tr>
-                        </tfoot>
-                    </table>
-                </div>
-            `;
-            
-            container.innerHTML = htmlContent; 
-            
-            // Nama file PDF bersih (tanpa simbol)
-            const safeName = curWorker.name.replace(/[^a-zA-Z0-9 ]/g, "").trim().replace(/\s+/g, "_");
-
-            // Opsi konversi html2pdf
-            const opt = {
-                margin:       [10, 10, 10, 10], // Atas, Kiri, Bawah, Kanan
-                filename:     `Laporan_${safeName}_${new Date().toISOString().slice(0,10)}.pdf`,
-                image:        { type: 'jpeg', quality: 0.98 },
-                html2canvas:  { scale: 2, useCORS: true },
-                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            };
-            
-            // Eksekusi Download PDF
-            html2pdf().set(opt).from(container).save().then(() => {
-                showToast('Laporan PDF berhasil diunduh!', 'success');
-                container.innerHTML = ''; // Bersihkan kontainer setelah dipakai
-            }).catch(err => {
-                console.error(err);
-                showToast('Terjadi kesalahan saat memproses PDF.', 'error');
-            });
-        }
-
         function shareWhatsApp() {
             const curWorker = workers.find(w => w.id === currentWorkerId);
             const workerActivities = activities.filter(a => a.workerId === currentWorkerId);
             
             let text = `📋 *LAPORAN AKTIVITAS GWIP*\n`;
-            text += `🧑‍🔧 *Pekerja:* ${curWorker.name}\n`;
+            text += `🧑‍🔧 *Pekerja:* ${curWorker ? curWorker.name : '-'}\n`;
             text += `---------------------------\n`;
             
             let total = 0;
