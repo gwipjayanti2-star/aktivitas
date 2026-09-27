@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Laporan Aktivitas GWIP </title>
+    <title>Laporan Aktivitas GWIP PWA</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -25,9 +25,9 @@
                             400: '#e76b6b',
                             500: '#d93e3e',
                             600: '#c12626',
-                            700: '#a21d1d', // Primary Maroon
+                            700: '#a21d1d', 
                             800: '#861b1b',
-                            900: '#701a1a', // Darker Maroon
+                            900: '#701a1a',
                         }
                     }
                 }
@@ -35,171 +35,196 @@
         }
     </script>
     <style>
-        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; }
+        body { font-family: 'Inter', sans-serif; background-color: #f3f4f6; -webkit-tap-highlight-color: transparent; }
         .hide-scroll::-webkit-scrollbar { display: none; }
         .hide-scroll { -ms-overflow-style: none; scrollbar-width: none; }
-        .glass-header { background: rgba(162, 29, 29, 0.95); backdrop-filter: blur(10px); }
+        .glass-header { background: rgba(162, 29, 29, 0.98); backdrop-filter: blur(12px); }
         
-        /* Mobile Card Layout for Table */
         @media (max-width: 640px) {
             .table-header { display: none; }
-            .activity-row { display: flex; flex-direction: column; background: white; margin-bottom: 1rem; border-radius: 0.5rem; box-shadow: 0 1px 3px rgba(0,0,0,0.1); padding: 1rem; }
-            .activity-cell { padding: 0.25rem 0; display: flex; justify-content: space-between; align-items: center; border: none; }
-            .activity-cell::before { content: attr(data-label); font-weight: 600; color: #4b5563; font-size: 0.875rem; }
-            .action-cell { border-top: 1px solid #e5e7eb; margin-top: 0.5rem; padding-top: 0.5rem; justify-content: flex-end; gap: 0.5rem; }
+            .activity-row { display: flex; flex-direction: column; background: white; margin-bottom: 0.75rem; border-radius: 0.75rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); padding: 1rem; border: 1px solid #e5e7eb; }
+            .activity-cell { padding: 0.35rem 0; display: flex; justify-content: space-between; align-items: center; border: none; }
+            .activity-cell::before { content: attr(data-label); font-weight: 600; color: #4b5563; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.025em; }
+            .action-cell { border-top: 1px solid #f3f4f6; margin-top: 0.75rem; padding-top: 0.75rem; justify-content: flex-end; gap: 0.75rem; display: flex; }
+        }
+
+        /* Styles khusus saat rendering PDF multi-halaman */
+        .pdf-page-container {
+            page-break-after: always;
+            break-after: page;
+            background: #ffffff;
+            padding: 20px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        .pdf-page-container:last-child {
+            page-break-after: avoid;
+            break-after: avoid;
         }
     </style>
-    <!-- Dynamic Manifest Link -->
+    <!-- Dynamic Manifest Link for PWA -->
     <link id="manifest-link" rel="manifest" href="">
+    <meta name="theme-color" content="#a21d1d">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 </head>
-<body class="text-gray-800 pb-24">
+<body class="text-gray-800 pb-32">
 
-    <nav class="glass-header sticky top-0 z-40 text-white shadow-lg">
+    <nav class="glass-header sticky top-0 z-40 text-white shadow-xl">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16">
                 <div class="flex items-center gap-3">
-                    <i class="fas fa-clipboard-list text-2xl"></i>
-                    <span class="font-bold text-lg leading-tight">GWIP Lantai 1<br><span class="text-xs font-normal text-maroon-200">Log Aktivitas</span></span>
+                    <div class="w-10 h-10 rounded-xl bg-white/10 flex items-center justify-center border border-white/20">
+                        <i class="fas fa-clipboard-user text-xl text-maroon-100"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-base leading-tight block">GWIP AKtivitas</span>
+                        <span class="text-xs text-maroon-200">Sistem Log Aktivitas Harian</span>
+                    </div>
                 </div>
-                <div class="flex gap-3">
-                    <button onclick="openSettingsModal()" class="p-2 bg-maroon-800 hover:bg-maroon-900 rounded-full transition">
+                <div class="flex items-center gap-2">
+                    <button onclick="openSettingsModal()" title="Pengaturan & Spreadsheet" class="p-2.5 bg-maroon-800 hover:bg-maroon-900 rounded-xl transition shadow border border-maroon-600">
                         <i class="fas fa-cog"></i>
                     </button>
-                    <button onclick="shareWhatsApp()" class="p-2 bg-green-500 hover:bg-green-600 rounded-full transition shadow text-white">
-                        <i class="fab fa-whatsapp"></i>
+                    <button onclick="shareWhatsApp()" title="Kirim ke WhatsApp" class="p-2.5 bg-emerald-600 hover:bg-emerald-700 rounded-xl transition shadow text-white">
+                        <i class="fab fa-whatsapp text-lg"></i>
                     </button>
-                    <button onclick="exportToPDF()" class="p-2 bg-blue-500 hover:bg-blue-600 rounded-full transition shadow text-white">
-                        <i class="fas fa-file-pdf"></i>
+                    <button onclick="exportAllWorkersPDF()" title="Unduh Semua PDF Pekerja (Multi-Halaman)" class="p-2.5 bg-sky-600 hover:bg-sky-700 rounded-xl transition shadow text-white flex items-center gap-1.5 text-xs font-bold">
+                        <i class="fas fa-file-pdf"></i> <span>PDF Semua Pekerja</span>
                     </button>
                 </div>
             </div>
             
             <!-- Worker Tabs -->
-            <div id="workerTabs" class="flex overflow-x-auto hide-scroll gap-2 pb-2">
-                <!-- Rendered dynamically -->
+            <div id="workerTabs" class="flex overflow-x-auto hide-scroll gap-2 pb-3 pt-1">
+                <!-- Populated dynamically -->
             </div>
         </div>
     </nav>
 
     <main class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6" id="report-container">
         
-        <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-bold text-gray-800" id="currentWorkerTitle">Aktivitas Pekerja</h2>
-            <button onclick="openAddModal()" class="bg-maroon-700 hover:bg-maroon-800 text-white px-4 py-2 rounded-lg text-sm font-medium shadow transition flex items-center gap-2">
-                <i class="fas fa-plus"></i> <span class="hidden sm:inline">Tambah Aktivitas</span>
+        <div class="flex justify-between items-center mb-5 bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
+            <div>
+                <span class="text-xs uppercase tracking-wider text-gray-400 font-bold block">Pekerja Aktif</span>
+                <h2 class="text-lg font-bold text-gray-800" id="currentWorkerTitle">Memuat Pekerja...</h2>
+            </div>
+            <button onclick="openAddModal()" class="bg-maroon-700 hover:bg-maroon-800 active:scale-95 text-white px-4 py-2.5 rounded-xl text-sm font-semibold shadow-md transition flex items-center gap-2">
+                <i class="fas fa-plus"></i> <span>Tambah Aktivitas</span>
             </button>
         </div>
 
-        <div class="bg-white rounded-xl shadow overflow-hidden">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             <table class="w-full text-left border-collapse" id="pdf-table">
                 <thead class="bg-gray-50 table-header border-b border-gray-200">
                     <tr>
-                        <th class="p-4 font-semibold text-gray-600 w-1/2">Aktivitas</th>
-                        <th class="p-4 font-semibold text-gray-600 text-center">Freq</th>
-                        <th class="p-4 font-semibold text-gray-600 text-center">Menit/Freq</th>
-                        <th class="p-4 font-semibold text-gray-600 text-center">Total (Mnt)</th>
-                        <th class="p-4 font-semibold text-gray-600 text-right print-hide">Aksi</th>
+                        <th class="p-4 font-semibold text-gray-600 w-1/2 text-sm">Aktivitas</th>
+                        <th class="p-4 font-semibold text-gray-600 text-center text-sm">Freq</th>
+                        <th class="p-4 font-semibold text-gray-600 text-center text-sm">Menit/Freq</th>
+                        <th class="p-4 font-semibold text-gray-600 text-center text-sm">Total Menit</th>
+                        <th class="p-4 font-semibold text-gray-600 text-right print-hide text-sm">Aksi</th>
                     </tr>
                 </thead>
                 <tbody id="activityList" class="divide-y divide-gray-100">
-                    <!-- Activities populated dynamically -->
+                    <!-- Populated dynamically -->
                 </tbody>
             </table>
         </div>
         
-        <!-- API Sync Button -->
-        <div class="mt-8 flex justify-center print-hide">
-            <button onclick="syncToSpreadsheet()" id="syncBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-semibold shadow-lg transition flex items-center gap-2">
-                <i class="fas fa-cloud-upload-alt"></i> Sync ke Google Spreadsheet
+        <!-- Primary Action Section (Simpan Data / Sync) -->
+        <div class="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4 print-hide">
+            <button onclick="saveLocalData()" class="w-full bg-white hover:bg-gray-50 text-gray-700 border border-gray-300 py-3.5 px-6 rounded-2xl font-bold shadow-sm transition flex items-center justify-center gap-2.5 active:scale-95">
+                <i class="fas fa-save text-maroon-700"></i> Simpan Sesi Lokal
+            </button>
+            <button onclick="syncToSpreadsheet()" id="syncBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white py-3.5 px-6 rounded-2xl font-bold shadow-lg transition flex items-center justify-center gap-2.5">
+                <i class="fas fa-cloud-arrow-up text-lg"></i> Kirim ke Google Spreadsheet
             </button>
         </div>
     </main>
 
-    <div class="fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-30 print-hide">
-        <div class="max-w-4xl mx-auto px-4 h-16 flex items-center justify-between">
+    <!-- Hidden container used solely for multi-page bulk PDF export -->
+    <div id="pdf-export-pool" class="hidden"></div>
+
+    <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-200 shadow-[0_-8px_20px_-4px_rgba(0,0,0,0.1)] z-30 print-hide">
+        <div class="max-w-4xl mx-auto px-4 py-3 flex items-center justify-between">
             <div>
-                <p class="text-xs text-gray-500 font-medium">Total Waktu Pekerja Ini</p>
-                <div class="flex items-center gap-2">
-                    <span id="totalTimeDisplay" class="text-xl font-bold text-gray-800">0</span>
-                    <span class="text-sm font-medium text-gray-500">/ 420 Menit</span>
+                <p class="text-xs uppercase tracking-wider text-gray-400 font-bold">Total Waktu Kerja</p>
+                <div class="flex items-baseline gap-1.5">
+                    <span id="totalTimeDisplay" class="text-2xl font-black text-maroon-700">0</span>
+                    <span class="text-sm font-semibold text-gray-500">/ 420 Menit Target Shift</span>
                 </div>
             </div>
-            <div id="statusBadge" class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600">
+            <div id="statusBadge" class="px-4 py-2 rounded-xl text-xs font-bold shadow-sm">
                 Memuat...
             </div>
         </div>
     </div>
 
-    <!-- Add/Edit Modal -->
-    <div id="activityModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
-            <div class="bg-maroon-700 p-4 flex justify-between items-center text-white">
+    <div id="activityModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+        <div class="bg-white rounded-t-3xl sm:rounded-2xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
+            <div class="bg-maroon-700 p-5 flex justify-between items-center text-white">
                 <h3 class="font-bold text-lg" id="modalTitle">Tambah Aktivitas</h3>
-                <button onclick="closeModal('activityModal')" class="text-maroon-200 hover:text-white transition"><i class="fas fa-times text-xl"></i></button>
+                <button onclick="closeModal('activityModal')" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-maroon-100 hover:text-white transition"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-6 space-y-4">
                 <input type="hidden" id="editActivityId">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Nama Aktivitas</label>
-                    <input type="text" id="activityName" class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:border-maroon-500 focus:ring-1 focus:ring-maroon-500 outline-none transition" placeholder="Contoh: Dorong bahan ke ck">
+                    <label class="block text-xs uppercase font-bold text-gray-500 mb-1.5">Nama Aktivitas / Pekerjaan</label>
+                    <input type="text" id="activityName" class="w-full border-gray-200 rounded-xl p-3.5 bg-gray-50 border focus:border-maroon-500 focus:bg-white focus:ring-2 focus:ring-maroon-100 outline-none transition text-sm font-medium" placeholder="Contoh: Dorong bahan baku ke CK">
                 </div>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Frekuensi</label>
-                        <input type="number" id="activityFreq" min="1" value="1" class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:border-maroon-500 outline-none transition">
+                        <label class="block text-xs uppercase font-bold text-gray-500 mb-1.5">Frekuensi (Kali)</label>
+                        <input type="number" id="activityFreq" min="1" value="1" class="w-full border-gray-200 rounded-xl p-3.5 bg-gray-50 border focus:border-maroon-500 focus:bg-white focus:ring-2 focus:ring-maroon-100 outline-none transition text-sm font-medium">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Waktu (Menit)</label>
-                        <input type="number" id="activityTime" min="1" value="10" class="w-full border-gray-300 rounded-lg p-3 bg-gray-50 border focus:border-maroon-500 outline-none transition">
+                        <label class="block text-xs uppercase font-bold text-gray-500 mb-1.5">Durasi (Menit / Freq)</label>
+                        <input type="number" id="activityTime" min="1" value="15" class="w-full border-gray-200 rounded-xl p-3.5 bg-gray-50 border focus:border-maroon-500 focus:bg-white focus:ring-2 focus:ring-maroon-100 outline-none transition text-sm font-medium">
                     </div>
                 </div>
-                <div class="pt-4">
-                    <button onclick="saveActivity()" class="w-full bg-maroon-700 hover:bg-maroon-800 text-white font-bold py-3 rounded-xl shadow transition">Simpan Aktivitas</button>
+                <div class="pt-4 pb-2">
+                    <button onclick="saveActivity()" class="w-full bg-maroon-700 hover:bg-maroon-800 active:scale-95 text-white font-bold py-3.5 rounded-xl shadow-lg shadow-maroon-700/20 transition">Simpan Aktivitas</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Settings Modal -->
     <div id="settingsModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-            <div class="bg-gray-800 p-4 flex justify-between items-center text-white shrink-0">
-                <h3 class="font-bold text-lg"><i class="fas fa-database mr-2"></i> Pengaturan & Backend</h3>
-                <button onclick="closeModal('settingsModal')" class="text-gray-400 hover:text-white transition"><i class="fas fa-times text-xl"></i></button>
+        <div class="bg-white rounded-3xl sm:rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
+            <div class="bg-gray-900 p-5 flex justify-between items-center text-white shrink-0">
+                <h3 class="font-bold text-base flex items-center gap-2"><i class="fas fa-sliders text-maroon-400"></i> Pengaturan & Google Sheets</h3>
+                <button onclick="closeModal('settingsModal')" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-6 overflow-y-auto space-y-6">
                 <!-- Pekerja Management -->
                 <div>
-                    <h4 class="font-bold text-gray-800 mb-3 border-b pb-2">Kelola Pekerja</h4>
+                    <h4 class="font-bold text-gray-800 text-sm mb-3 flex items-center justify-between">
+                        <span>Manajemen Pekerja</span>
+                        <span class="text-xs text-gray-400 font-normal">Pilih atau tambah pekerja</span>
+                    </h4>
                     <div id="workersListEdit" class="space-y-2 mb-3"></div>
-                    <div class="flex gap-2 mb-2">
-                        <input type="text" id="newWorkerName" placeholder="Nama pekerja baru" class="flex-1 border border-gray-300 rounded-lg p-2 text-sm outline-none">
-                        <button onclick="addWorker()" class="bg-gray-800 text-white px-3 py-2 rounded-lg text-sm font-bold"><i class="fas fa-plus"></i></button>
+                    <div class="flex gap-2 mb-3">
+                        <input type="text" id="newWorkerName" placeholder="Nama Pekerja Baru..." class="flex-1 border border-gray-300 rounded-xl px-3.5 py-2.5 text-sm outline-none focus:border-maroon-500">
+                        <button onclick="addWorker()" class="bg-gray-900 hover:bg-black text-white px-4 py-2.5 rounded-xl text-sm font-bold shadow transition"><i class="fas fa-plus"></i></button>
                     </div>
-                    <button onclick="addFloor2WorkerTemplate()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm">
-                        <i class="fas fa-layer-group"></i> + Tambah Preset Pekerja Lantai 2 (420 Mnt)
+                    <button onclick="addFloor2WorkerTemplate()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-4 rounded-xl text-xs font-bold transition flex items-center justify-center gap-2 shadow-sm">
+                        <i class="fas fa-layer-group text-sm"></i> + Template Preset Pekerja Lantai 2 (Target 420 Mnt)
                     </button>
                 </div>
 
                 <!-- API Settings -->
                 <div>
-                    <h4 class="font-bold text-gray-800 mb-3 border-b pb-2">Google Spreadsheet API</h4>
-                    <p class="text-xs text-gray-500 mb-3">Masukkan URL Web App dari Google Apps Script untuk menyimpan data langsung ke Spreadsheet Anda.</p>
-                    <input type="text" id="apiUrlInput" placeholder="https://script.google.com/macros/s/AKfycbwzdIkU4k_tbkOM1N1mEzjLLvdavGkmLyoc3vH4PPAF2GgNOn30eRkKfAgs7M0qXo1J/exec" class="w-full border-gray-300 border rounded-lg p-3 text-sm bg-gray-50 outline-none mb-2">
-                    <button onclick="saveApiUrl()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-bold transition">Simpan URL API</button>
+                    <h4 class="font-bold text-gray-800 text-sm mb-2">URL Web App Google Apps Script</h4>
+                    <p class="text-xs text-gray-500 mb-2.5">Hubungkan langsung ke Spreadsheet Anda agar setiap data tersimpan secara online.</p>
+                    <input type="text" id="apiUrlInput" placeholder="https://script.google.com/macros/s/.../exec" class="w-full border-gray-200 border rounded-xl p-3 text-xs bg-gray-50 outline-none mb-2.5 focus:border-maroon-500 font-mono">
+                    <button onclick="saveApiUrl()" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2.5 rounded-xl text-xs font-bold transition shadow-sm">Simpan Konfigurasi URL API</button>
                 </div>
 
-                <!-- Setup Guide -->
-                <div class="bg-yellow-50 rounded-lg p-4 border border-yellow-200">
-                    <h4 class="font-bold text-yellow-800 text-sm mb-2"><i class="fas fa-info-circle"></i> Cara Setup Database Spreadsheet</h4>
-                    <ol class="text-xs text-yellow-700 list-decimal pl-4 space-y-1">
-                        <li>Buka Google Sheets baru.</li>
-                        <li>Klik <b>Ekstensi</b> > <b>Apps Script</b>.</li>
-                        <li>Hapus semua kode, lalu paste kode di bawah ini.</li>
-                        <li>Klik <b>Terapkan</b> > <b>Deployment Baru</b> > Pilih <b>Aplikasi Web</b>.</li>
-                        <li>Akses: <b>Siapa saja</b>, lalu Deploy. Copy URL-nya ke kolom di atas.</li>
-                    </ol>
-                    <textarea readonly class="w-full mt-3 h-24 text-xs font-mono bg-white border border-yellow-300 p-2 rounded hide-scroll" onclick="this.select()">
+                <!-- Apps Script Guide -->
+                <div class="bg-amber-50 rounded-2xl p-4 border border-amber-200/60">
+                    <h4 class="font-bold text-amber-900 text-xs mb-1.5 flex items-center gap-1.5"><i class="fas fa-circle-info text-amber-600"></i> Panduan Singkat Google Apps Script</h4>
+                    <p class="text-xs text-amber-800/80 mb-2">Buat Google Sheets baru > Ekstensi > Apps Script, lalu gunakan script berikut untuk menerima data sync:</p>
+                    <textarea readonly class="w-full h-24 text-[10px] font-mono bg-white border border-amber-300 p-2.5 rounded-xl hide-scroll select-all" onclick="this.select()">
 function doPost(e) {
   var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
   var data = JSON.parse(e.postData.contents);
@@ -223,14 +248,12 @@ function doPost(e) {
         </div>
     </div>
 
-    <!-- Custom Toast Alert -->
-    <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-gray-800 text-white px-6 py-3 rounded-full shadow-2xl transition-all duration-300 opacity-0 -translate-y-10 z-50 flex items-center gap-3">
-        <i id="toastIcon" class="fas fa-info-circle"></i>
-        <span id="toastMsg" class="font-medium text-sm">Pesan</span>
+    <div id="toast" class="fixed top-5 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-5 py-3 rounded-2xl shadow-2xl transition-all duration-300 opacity-0 -translate-y-10 z-50 flex items-center gap-3 text-sm">
+        <i id="toastIcon" class="fas fa-check-circle text-emerald-400 text-base"></i>
+        <span id="toastMsg" class="font-medium">Pesan</span>
     </div>
 
     <script>
-        // State Management
         let workers = [
             { id: 'w1', name: 'Pekerja 1 (Dumping & CK)' },
             { id: 'w2', name: 'Pekerja 2 (Lantai 2 & L4)' },
@@ -243,7 +266,6 @@ function doPost(e) {
 
         // Default Target 420 minutes distribution data
         const defaultData = [
-            // Pekerja 1
             { id: 'a1', workerId: 'w1', name: 'Nginput Data bonan ke stok jalur digital', frequency: 2, timePerFreq: 15 },
             { id: 'a2', workerId: 'w1', name: 'Motong bonan di stok jalur digital', frequency: 2, timePerFreq: 15 },
             { id: 'a3', workerId: 'w1', name: 'Dorong gula box kosong ke damping', frequency: 5, timePerFreq: 10 },
@@ -255,7 +277,6 @@ function doPost(e) {
             { id: 'a9', workerId: 'w1', name: 'Dorong bahan ke ck', frequency: 3, timePerFreq: 15 },
             { id: 'a10', workerId: 'w1', name: 'Dorong bon bonan bahan ck', frequency: 3, timePerFreq: 15 },
 
-            // Pekerja 2
             { id: 'b1', workerId: 'w2', name: 'Nginput Data bonan ke stok jalur digital', frequency: 2, timePerFreq: 15 },
             { id: 'b2', workerId: 'w2', name: 'Motong bonan di stok jalur digital', frequency: 2, timePerFreq: 15 },
             { id: 'b3', workerId: 'w2', name: 'Dorong gula line 4 molding', frequency: 4, timePerFreq: 10 },
@@ -269,7 +290,6 @@ function doPost(e) {
             { id: 'b11', workerId: 'w2', name: 'Dorong bonan flavor ke lt 2 dari ruang flavor', frequency: 2, timePerFreq: 20 },
             { id: 'b12', workerId: 'w2', name: 'Naikin batre spare linde', frequency: 1, timePerFreq: 15 },
 
-            // Pekerja 3
             { id: 'c1', workerId: 'w3', name: 'Nginput Data bonan ke stok jalur digital', frequency: 2, timePerFreq: 15 },
             { id: 'c2', workerId: 'w3', name: 'Motong bonan di stok jalur digital', frequency: 2, timePerFreq: 15 },
             { id: 'c3', workerId: 'w3', name: 'Dorong bahan formulasi ke cream', frequency: 3, timePerFreq: 15 },
@@ -295,14 +315,13 @@ function doPost(e) {
         ];
 
         function initApp() {
-            // Load from LocalStorage
             const savedWorkers = localStorage.getItem('gwip_workers');
             const savedActivities = localStorage.getItem('gwip_activities');
             const savedApi = localStorage.getItem('gwip_api');
             
             if (savedWorkers) workers = JSON.parse(savedWorkers);
             if (savedActivities) activities = JSON.parse(savedActivities);
-            else activities = [...defaultData]; // Use default distributed logic 420 mins if empty
+            else activities = [...defaultData];
             if (savedApi) apiUrl = savedApi;
 
             if(!workers.find(w => w.id === currentWorkerId)) {
@@ -315,19 +334,19 @@ function doPost(e) {
             document.getElementById('apiUrlInput').value = apiUrl;
         }
 
-        function saveData() {
+        function saveLocalData() {
             localStorage.setItem('gwip_workers', JSON.stringify(workers));
             localStorage.setItem('gwip_activities', JSON.stringify(activities));
+            showToast('Data berhasil disimpan secara lokal!');
         }
 
-        // Custom UI Tools
         function showToast(msg, isError = false) {
             const toast = document.getElementById('toast');
             document.getElementById('toastMsg').innerText = msg;
             const icon = document.getElementById('toastIcon');
             
-            toast.className = `fixed top-5 left-1/2 transform -translate-x-1/2 px-6 py-3 rounded-full shadow-2xl transition-all duration-300 z-50 flex items-center gap-3 ${isError ? 'bg-red-600 text-white' : 'bg-gray-800 text-white'}`;
-            icon.className = isError ? 'fas fa-exclamation-circle' : 'fas fa-check-circle text-green-400';
+            toast.className = `fixed top-5 left-1/2 transform -translate-x-1/2 px-5 py-3 rounded-2xl shadow-2xl transition-all duration-300 z-50 flex items-center gap-3 text-sm ${isError ? 'bg-red-600 text-white' : 'bg-gray-900 text-white'}`;
+            icon.className = isError ? 'fas fa-triangle-exclamation text-amber-300 text-base' : 'fas fa-check-circle text-emerald-400 text-base';
             
             toast.classList.remove('opacity-0', '-translate-y-10');
             setTimeout(() => {
@@ -346,7 +365,7 @@ function doPost(e) {
             workers.forEach(w => {
                 const isActive = w.id === currentWorkerId;
                 const btn = document.createElement('button');
-                btn.className = `whitespace-nowrap px-4 py-2 rounded-full text-sm font-semibold transition shadow-sm ${isActive ? 'bg-white text-maroon-700' : 'bg-maroon-800 text-maroon-100 hover:bg-maroon-600 border border-maroon-700'}`;
+                btn.className = `whitespace-nowrap px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition shadow-sm ${isActive ? 'bg-white text-maroon-700 shadow-md' : 'bg-maroon-800/80 text-maroon-100 hover:bg-maroon-600 border border-maroon-600/50'}`;
                 btn.innerText = w.name;
                 btn.onclick = () => { currentWorkerId = w.id; renderWorkerTabs(); renderActivities(); };
                 tabsContainer.appendChild(btn);
@@ -364,58 +383,57 @@ function doPost(e) {
             let totalMins = 0;
 
             if (workerActivities.length === 0) {
-                list.innerHTML = `<tr><td colspan="5" class="text-center p-8 text-gray-500"><i class="fas fa-folder-open text-3xl mb-2 opacity-50 block"></i> Belum ada aktivitas. Tambahkan sekarang!</td></tr>`;
+                list.innerHTML = `<tr><td colspan="5" class="text-center p-10 text-gray-400"><i class="fas fa-clipboard-list text-3xl mb-2 opacity-40 block"></i>Belum ada aktivitas untuk pekerja ini.</td></tr>`;
             } else {
                 workerActivities.forEach((a, index) => {
                     const total = a.frequency * a.timePerFreq;
                     totalMins += total;
                     
                     const tr = document.createElement('tr');
-                    tr.className = "activity-row hover:bg-maroon-50 transition border-b border-gray-100 last:border-none";
+                    tr.className = "activity-row hover:bg-maroon-50/50 transition border-b border-gray-100 last:border-none";
                     tr.innerHTML = `
                         <td class="p-4 activity-cell" data-label="Aktivitas">
-                            <span class="font-medium text-gray-800">${index + 1}. ${a.name}</span>
+                            <span class="font-semibold text-gray-800 text-sm">${index + 1}. ${a.name}</span>
                         </td>
-                        <td class="p-4 text-center activity-cell" data-label="Freq">
-                            <span class="inline-block bg-gray-100 px-3 py-1 rounded-md font-bold text-gray-700">${a.frequency}x</span>
+                        <td class="p-4 text-center activity-cell" data-label="Frekuensi">
+                            <span class="inline-block bg-gray-100 px-2.5 py-1 rounded-lg font-bold text-gray-700 text-xs">${a.frequency}x</span>
                         </td>
-                        <td class="p-4 text-center activity-cell" data-label="Menit/Freq">
-                            <span class="text-gray-600">${a.timePerFreq} mnt</span>
+                        <td class="p-4 text-center activity-cell" data-label="Waktu/Freq">
+                            <span class="text-gray-600 text-sm font-medium">${a.timePerFreq} mnt</span>
                         </td>
-                        <td class="p-4 text-center activity-cell" data-label="Total">
-                            <span class="font-bold text-maroon-700">${total} mnt</span>
+                        <td class="p-4 text-center activity-cell" data-label="Total Menit">
+                            <span class="font-bold text-maroon-700 text-sm">${total} mnt</span>
                         </td>
                         <td class="p-4 text-right action-cell print-hide">
-                            <button onclick="editActivity('${a.id}')" class="text-blue-500 hover:bg-blue-50 p-2 rounded transition"><i class="fas fa-edit"></i></button>
-                            <button onclick="deleteActivity('${a.id}')" class="text-red-500 hover:bg-red-50 p-2 rounded transition"><i class="fas fa-trash"></i></button>
+                            <button onclick="editActivity('${a.id}')" class="text-sky-600 hover:bg-sky-50 p-2 rounded-lg transition" title="Edit"><i class="fas fa-pen-to-square"></i></button>
+                            <button onclick="deleteActivity('${a.id}')" class="text-rose-600 hover:bg-rose-50 p-2 rounded-lg transition" title="Hapus"><i class="fas fa-trash-can"></i></button>
                         </td>
                     `;
                     list.appendChild(tr);
                 });
             }
 
-            // Update Bottom Bar Target
             document.getElementById('totalTimeDisplay').innerText = totalMins;
             const badge = document.getElementById('statusBadge');
             
             if (totalMins === 420) {
-                badge.className = "px-3 py-1 rounded-full text-xs font-bold bg-green-100 text-green-700";
-                badge.innerText = "Sempurna (420 Menit)";
+                badge.className = "px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800 shadow-sm flex items-center gap-1.5";
+                badge.innerHTML = `<i class="fas fa-circle-check text-emerald-600"></i><span>Sempurna (420 Mnt)</span>`;
             } else if (totalMins > 420) {
-                badge.className = "px-3 py-1 rounded-full text-xs font-bold bg-red-100 text-red-700";
-                badge.innerText = `Kelebihan ${totalMins - 420} Menit`;
+                badge.className = "px-3.5 py-2 rounded-xl text-xs font-bold bg-rose-100 text-rose-800 shadow-sm flex items-center gap-1.5";
+                badge.innerHTML = `<i class="fas fa-triangle-exclamation text-rose-600"></i> <span>Kelebihan ${totalMins - 420} Mnt</span>`;
             } else {
-                badge.className = "px-3 py-1 rounded-full text-xs font-bold bg-yellow-100 text-yellow-700";
-                badge.innerText = `Kurang ${420 - totalMins} Menit`;
+                badge.className = "px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-100 text-amber-800 shadow-sm flex items-center gap-1.5";
+                badge.innerHTML = `<i class="fas fa-clock text-amber-600"></i> <span>Kurang ${420 - totalMins} Mnt</span>`;
             }
         }
 
         function openAddModal() {
-            document.getElementById('modalTitle').innerText = 'Tambah Aktivitas';
+            document.getElementById('modalTitle').innerText = 'Tambah Aktivitas Baru';
             document.getElementById('editActivityId').value = '';
             document.getElementById('activityName').value = '';
             document.getElementById('activityFreq').value = '1';
-            document.getElementById('activityTime').value = '10';
+            document.getElementById('activityTime').value = '15';
             document.getElementById('activityModal').classList.remove('hidden');
         }
 
@@ -437,7 +455,7 @@ function doPost(e) {
             const time = parseInt(document.getElementById('activityTime').value);
 
             if(!name || isNaN(freq) || isNaN(time)) {
-                showToast('Mohon lengkapi semua data dengan benar!', true);
+                showToast('Mohon lengkapi seluruh kolom dengan benar!', true);
                 return;
             }
 
@@ -454,36 +472,35 @@ function doPost(e) {
                 });
             }
 
-            saveData();
+            saveLocalData();
             renderActivities();
             closeModal('activityModal');
-            showToast('Aktivitas berhasil disimpan');
         }
 
         function deleteActivity(id) {
             activities = activities.filter(a => a.id !== id);
-            saveData();
+            saveLocalData();
             renderActivities();
-            showToast('Aktivitas dihapus');
+            showToast('Aktivitas berhasil dihapus');
         }
 
         function closeModal(id) {
             document.getElementById(id).classList.add('hidden');
         }
+        
         function openSettingsModal() {
             renderSettingsWorkers();
             document.getElementById('settingsModal').classList.remove('hidden');
         }
 
-        // Worker Settings
         function renderSettingsWorkers() {
             const list = document.getElementById('workersListEdit');
             list.innerHTML = '';
             workers.forEach(w => {
                 list.innerHTML += `
-                    <div class="flex items-center justify-between bg-gray-50 p-2 rounded border border-gray-200">
-                        <span class="text-sm font-medium text-gray-700">${w.name}</span>
-                        ${workers.length > 1 ? `<button onclick="deleteWorker('${w.id}')" class="text-red-500 p-1"><i class="fas fa-trash-alt"></i></button>` : ''}
+                    <div class="flex items-center justify-between bg-gray-50 px-3.5 py-2.5 rounded-xl border border-gray-200">
+                        <span class="text-xs font-semibold text-gray-700">${w.name}</span>
+                        ${workers.length > 1 ? `<button onclick="deleteWorker('${w.id}')" class="text-rose-500 hover:text-rose-700 p-1 text-sm"><i class="fas fa-trash-can"></i></button>` : ''}
                     </div>
                 `;
             });
@@ -494,17 +511,16 @@ function doPost(e) {
             if(!name) return;
             workers.push({ id: generateId(), name });
             document.getElementById('newWorkerName').value = '';
-            saveData();
+            saveLocalData();
             renderSettingsWorkers();
             renderWorkerTabs();
-            showToast('Pekerja ditambahkan');
+            showToast('Pekerja baru ditambahkan');
         }
 
         function addFloor2WorkerTemplate() {
             const newId = generateId();
             workers.push({ id: newId, name: 'Pekerja Lantai 2 (Packing & Line)' });
             
-            // Preset aktivitas khusus Lantai 2 yang pas 420 Menit
             const floor2Activities = [
                 { id: generateId(), workerId: newId, name: 'Inspeksi awal jalur conveyor lantai 2', frequency: 2, timePerFreq: 25 },
                 { id: generateId(), workerId: newId, name: 'Pengisian bahan baku & kemasan lantai 2', frequency: 3, timePerFreq: 30 },
@@ -514,11 +530,11 @@ function doPost(e) {
             ];
 
             activities.push(...floor2Activities);
-            saveData();
+            saveLocalData();
             renderSettingsWorkers();
             renderWorkerTabs();
             renderActivities();
-            showToast('Pekerja Lantai 2 berhasil ditambahkan (Total 420 Menit)');
+            showToast('Preset Lantai 2 berhasil ditambahkan (Pas 420 Menit)');
         }
 
         function deleteWorker(id) {
@@ -526,7 +542,7 @@ function doPost(e) {
             workers = workers.filter(w => w.id !== id);
             activities = activities.filter(a => a.workerId !== id);
             if(currentWorkerId === id) currentWorkerId = workers[0].id;
-            saveData();
+            saveLocalData();
             renderSettingsWorkers();
             renderWorkerTabs();
             renderActivities();
@@ -536,36 +552,113 @@ function doPost(e) {
         function saveApiUrl() {
             apiUrl = document.getElementById('apiUrlInput').value.trim();
             localStorage.setItem('gwip_api', apiUrl);
-            showToast('URL API Tersimpan');
+            showToast('URL Spreadsheet API Berhasil Disimpan');
         }
 
-        function exportToPDF() {
-            const curWorker = workers.find(w => w.id === currentWorkerId);
-            const element = document.getElementById('report-container');
+        // Fitur Export PDF Multi-Halaman Semua Pekerja
+        function exportAllWorkersPDF() {
+            if (workers.length === 0) {
+                showToast('Tidak ada data pekerja untuk diexport!', true);
+                return;
+            }
+
+            showToast('Menyiapkan dokumen PDF semua pekerja...');
+            const pool = document.getElementById('pdf-export-pool');
+            pool.innerHTML = ''; // Kosongkan kontainer sementara
+
+            const currentDate = new Date().toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' });
+
+            // Generate satu halaman PDF per pekerja
+            workers.forEach((worker, workerIdx) => {
+                const wActs = activities.filter(a => a.workerId === worker.id);
+                let totalWorkerMins = 0;
+
+                let rowsHTML = '';
+                if (wActs.length === 0) {
+                    rowsHTML = `<tr><td colspan="4" style="text-align: center; padding: 20px; color: #888;">Tidak ada aktivitas tercatat.</td></tr>`;
+                } else {
+                    wActs.forEach((act, idx) => {
+                        const actTotal = act.frequency * act.timePerFreq;
+                        totalWorkerMins += actTotal;
+                        rowsHTML += `
+                            <tr style="border-bottom: 1px solid #edf2f7;">
+                                <td style="padding: 10px; font-size: 13px; color: #2d3748;">${idx + 1}. ${act.name}</td>
+                                <td style="padding: 10px; text-align: center; font-size: 13px; color: #4a5568;">${act.frequency}x</td>
+                                <td style="padding: 10px; text-align: center; font-size: 13px; color: #4a5568;">${act.timePerFreq} mnt</td>
+                                <td style="padding: 10px; text-align: center; font-size: 13px; font-weight: bold; color: #a21d1d;">${actTotal} mnt</td>
+                            </tr>
+                        `;
+                    });
+                }
+
+                // Badge status waktu untuk pekerja ini
+                let statusBadgeHTML = '';
+                if (totalWorkerMins === 420) {
+                    statusBadgeHTML = `<span style="background: #def7ec; color: #03543f; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold;">Sempurna (420 Menit)</span>`;
+                } else if (totalWorkerMins > 420) {
+                    statusBadgeHTML = `<span style="background: #fde8e8; color: #9b1c1c; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold;">Kelebihan ${totalWorkerMins - 420} Menit</span>`;
+                } else {
+                    statusBadgeHTML = `<span style="background: #fef08a; color: #713f12; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: bold;">Kurang ${420 - totalWorkerMins} Menit</span>`;
+                }
+
+                const pageDiv = document.createElement('div');
+                pageDiv.className = 'pdf-page-container';
+                pageDiv.innerHTML = `
+                    <div style="border-bottom: 2px solid #a21d1d; padding-bottom: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-end;">
+                        <div>
+                            <span style="font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; color: #718096; font-weight: bold;">Laporan Aktivitas Harian GWIP</span>
+                            <h2 style="font-size: 18px; font-weight: 800; color: #1a202c; margin: 2px 0 0 0;">${worker.name}</h2>
+                        </div>
+                        <div style="text-align: right;">
+                            <span style="font-size: 11px; color: #4a5568; font-weight: 500;">Tanggal: ${currentDate}</span>
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 14px; background: #f7fafc; padding: 10px 14px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <span style="font-size: 11px; color: #718096; font-weight: bold; display: block;">Total Jam Kerja</span>
+                            <span style="font-size: 16px; font-weight: 900; color: #a21d1d;">${totalWorkerMins} Menit</span>
+                            <span style="font-size: 12px; color: #4a5568;">/ 420 Target Shift</span>
+                        </div>
+                        <div>${statusBadgeHTML}</div>
+                    </div>
+
+                    <table style="width: 100%; border-collapse: collapse; margin-top: 5px;">
+                        <thead>
+                            <tr style="background: #edf2f7; text-align: left;">
+                                <th style="padding: 10px; font-size: 12px; font-weight: bold; color: #4a5568; width: 55%;">Aktivitas</th>
+                                <th style="padding: 10px; text-align: center; font-size: 12px; font-weight: bold; color: #4a5568;">Freq</th>
+                                <th style="padding: 10px; text-align: center; font-size: 12px; font-weight: bold; color: #4a5568;">Menit/Freq</th>
+                                <th style="padding: 10px; text-align: center; font-size: 12px; font-weight: bold; color: #4a5568;">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${rowsHTML}
+                        </tbody>
+                    </table>
+
+                    <div style="margin-top: 30px; text-align: right; font-size: 10px; color: #a0aec0; border-top: 1px solid #edf2f7; pt: 10px;">
+                        Halaman ${workerIdx + 1} dari ${workers.length} — Sistem Log GWIP PWA
+                    </div>
+                `;
+                pool.appendChild(pageDiv);
+            });
+
             const opt = {
                 margin:       10,
-                filename:     `Laporan_GWIP_${curWorker.name}_${new Date().toISOString().slice(0,10)}.pdf`,
+                filename:     `Laporan_Semua_Pekerja_GWIP_${new Date().toISOString().slice(0,10)}.pdf`,
                 image:        { type: 'jpeg', quality: 0.98 },
                 html2canvas:  { scale: 2, useCORS: true },
                 jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
-            
-            showToast('Mempersiapkan PDF...');
-            
-            // Add a temporary title for PDF
-            const titleEl = document.createElement('h1');
-            titleEl.className = "text-2xl font-bold text-center text-maroon-800 mb-6 hidden-on-screen";
-            titleEl.innerText = `Laporan Aktivitas GWIP Lantai 1\nTanggal: ${new Date().toLocaleDateString('id-ID')}`;
-            element.insertBefore(titleEl, element.firstChild);
 
-            const style = document.createElement('style');
-            style.innerHTML = `@media print { .print-hide, .action-cell { display: none !important; } } .hidden-on-screen { display: block; }`;
-            document.head.appendChild(style);
-
-            html2pdf().set(opt).from(element).save().then(() => {
-                element.removeChild(titleEl);
-                document.head.removeChild(style);
-                showToast('PDF Berhasil Diunduh');
+            html2pdf().set(opt).from(pool).save().then(() => {
+                pool.innerHTML = '';
+                showToast('PDF Semua Pekerja Berhasil Diunduh (Multi-Halaman)');
+            }).catch(err => {
+                console.error(err);
+                showToast('Gagal mengunduh PDF', true);
+                pool.innerHTML = '';
             });
         }
 
@@ -582,27 +675,26 @@ function doPost(e) {
             workerActivities.forEach((a, i) => {
                 const actTotal = a.frequency * a.timePerFreq;
                 total += actTotal;
-                text += `${i+1}. ${a.name}\n   └ ${a.frequency}x @ ${a.timePerFreq}mnt = ${actTotal} mnt\n`;
+                text += `${i+1}. ${a.name} (${a.frequency}x @ ${a.timePerFreq}m = ${actTotal}m)\n`;
             });
             
-            text += `\n*Total Waktu:* ${total} Menit\n`;
+            text += `\n*Total Waktu:* ${total} / 420 Menit\n`;
             
-            const encodedText = encodeURIComponent(text);
-            window.open(`https://wa.me/?text=${encodedText}`, '_blank');
+            window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, '_blank');
         }
 
         async function syncToSpreadsheet() {
             if(!apiUrl) {
                 openSettingsModal();
-                showToast('Silahkan masukkan URL API Spreadsheet terlebih dahulu!', true);
+                showToast('Silahkan masukkan URL Spreadsheet Apps Script terlebih dahulu!', true);
                 return;
             }
 
             const btn = document.getElementById('syncBtn');
-            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Mengirim Data...`;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> Menyinkronkan...`;
             btn.disabled = true;
 
-            // Prepare flattened data for Spreadsheet
             const payload = [];
             workers.forEach(w => {
                 const wActs = activities.filter(a => a.workerId === w.id);
@@ -621,82 +713,63 @@ function doPost(e) {
                 const response = await fetch(apiUrl, {
                     method: 'POST',
                     body: JSON.stringify(payload),
-                    headers: { 'Content-Type': 'text/plain;charset=utf-8' } // text/plain to avoid CORS preflight issues with AppScript
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }
                 });
                 const result = await response.json();
                 if(result.status === 'success') {
-                    showToast('Data berhasil di-sync ke Google Sheets!');
+                    showToast('Data berhasil tersimpan di Google Spreadsheet!');
                 } else {
-                    throw new Error("Format response salah");
+                    throw new Error("Respon server invalid");
                 }
             } catch (error) {
-                showToast('Gagal Sync. Pastikan URL Apps Script benar dan di-deploy Anyone.', true);
+                showToast('Gagal Sync. Pastikan URL Apps Script benar & Deploy "Anyone"', true);
                 console.error(error);
             } finally {
-                btn.innerHTML = `<i class="fas fa-cloud-upload-alt"></i> Sync ke Google Spreadsheet`;
+                btn.innerHTML = originalHTML;
                 btn.disabled = false;
             }
         }
 
-        // Dynamically generating PWA manifest for Single File constraint
+        // Generate PWA Manifest Blob URL dynamically
         const manifestData = {
-            name: "GWIP Activity Logger",
+            name: "GWIP Activity Logger PWA",
             short_name: "GWIP Log",
             start_url: ".",
             display: "standalone",
             background_color: "#f3f4f6",
             theme_color: "#a21d1d",
-            description: "Aplikasi pencatat aktivitas pekerja GWIP",
+            description: "Aplikasi pencatat aktivitas harian lantai GWIP",
             icons: [
                 {
-                    src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23a21d1d' rx='100'/%3E%3Cpath fill='white' d='M256 96c-88.4 0-160 71.6-160 160s71.6 160 160 160 160-71.6 160-160S344.4 96 256 96zm0 288c-70.7 0-128-57.3-128-128S185.3 128 256 128s128 57.3 128 128-57.3 128-128 128zm64-136h-48V168h-32v96h80v-16z'/%3E%3C/svg%3E",
+                    src: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23a21d1d' rx='120'/%3E%3Cpath fill='white' d='M256 112c-79.5 0-144 64.5-144 144s64.5 144 144 144 144-64.5 144-144-64.5-144-144-144zm0 252c-59.6 0-108-48.4-108-108s48.4-108 108-108 108 48.4 108 108-48.4 108-108 108zm54-120h-72v-72h-36v90h108z'/%3E%3C/svg%3E",
                     sizes: "512x512",
                     type: "image/svg+xml",
                     purpose: "any maskable"
                 }
             ]
         };
-        const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
-        document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
+        document.getElementById('manifest-link').href = URL.createObjectURL(new Blob([JSON.stringify(manifestData)], {type: 'application/json'}));
 
-        // Dynamic Service Worker Injection
+        // Register Service Worker for offline PWA capabilities
         const swCode = `
-            const CACHE_NAME = 'gwip-cache-v1';
-            self.addEventListener('install', event => {
-                self.skipWaiting();
-            });
-            self.addEventListener('activate', event => {
-                event.waitUntil(clients.claim());
-            });
-            self.addEventListener('fetch', event => {
-                if (event.request.method === 'GET') {
-                    event.respondWith(
-                        caches.match(event.request).then(response => {
-                            return response || fetch(event.request).then(fetchRes => {
-                                return caches.open(CACHE_NAME).then(cache => {
-                                    if(event.request.url.startsWith('http')) {
-                                        cache.put(event.request, fetchRes.clone());
-                                    }
-                                    return fetchRes;
-                                });
-                            });
-                        }).catch(() => new Response('Offline Mode'))
+            const CACHE_NAME = 'gwip-pwa-v3';
+            self.addEventListener('install', e => self.skipWaiting());
+            self.addEventListener('activate', e => e.waitUntil(clients.claim()));
+            self.addEventListener('fetch', e => {
+                if (e.request.method === 'GET') {
+                    e.respondWith(
+                        caches.match(e.request).then(res => res || fetch(e.request).catch(() => caches.match(e.request)))
                     );
                 }
             });
         `;
-        const swBlob = new Blob([swCode], {type: 'application/javascript'});
-        const swUrl = URL.createObjectURL(swBlob);
-
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register(swUrl)
-                    .then(reg => console.log('Service Worker terdaftar di scope:', reg.scope))
-                    .catch(err => console.log('Pendaftaran Service Worker gagal:', err));
+                navigator.serviceWorker.register(URL.createObjectURL(new Blob([swCode], {type: 'application/javascript'})))
+                    .catch(err => console.log('SW registration error:', err));
             });
         }
 
-        // Run app init
         initApp();
     </script>
 </body>
