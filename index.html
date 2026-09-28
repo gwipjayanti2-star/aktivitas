@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
+    <!-- STREAMING_CHUNK:Konfigurasi Meta & PWA -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Sistem Laporan Aktivitas GWIP Pro</title>
@@ -14,11 +15,16 @@
     <!-- Dynamic Manifest Link -->
     <link id="pwaManifest" rel="manifest" href="data:application/manifest+json;base64,ewogICJuYW1lIjogIlNpc3RlbSBMb3BvcmFubiBha3Rpdml0YXMgR1dJUCIsCiAgInNob3J0X25hbWUiOiAiR1dJUCBUcmFja2VyIiwKICAic3RhcnRfdXJsIjogIi8iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNmOGZhZmMiLAogICJ0aGVtZV9jb2xvciI6ICIjYTIxZDFkIiwKICAiaWNvbnMiOiBbCiAgICB7CiAgICAgICJzcmMiOiAiaHR0cHM6Ly9wbGFjZWhvbGQuY28vMTkyLzE5Mi9hMmFjMWQvd2hpdGU/dGV4dD1HV0lQIiwKICAgICAgInR5c2UiOiAiaW1hZ2UvcG5nIiwKICAgICAgInNpemVzIjogIjE5MngxOTIiCiAgICB9LAogICAgewogICAgICAic3JjIjogImh0dHBzOi8vcwbGFjZWhvbGQuY28vNTEyLzUxMi9hMmFjMWQvd2hpdGU/dGV4dD1HV0lQIiwKICAgICAgInR5c2UiOiAiaW1hZ2UvcG5nIiwKICAgICAgInNpemVzIjogIjUxMng1MTIiCiAgICB9CiAgXQp9">
     
+    <!-- STREAMING_CHUNK:Memuat Library Tambahan (Tailwind, FontAwesome, SheetJS) -->
     <!-- Tailwind CSS and Libraries -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Library SheetJS untuk Export Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 
+    <!-- STREAMING_CHUNK:Styling CSS Dasar -->
     <script>
         tailwind.config = {
             theme: {
@@ -37,24 +43,19 @@
     <style>
         body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #f8fafc; -webkit-tap-highlight-color: transparent; }
         
-        /* Area scroll sentuh yang sangat responsif untuk daftar pekerja */
         .worker-tabs-scroll {
             display: flex;
             overflow-x: auto;
             scroll-snap-type: x mandatory;
             -webkit-overflow-scrolling: touch;
-            scrollbar-width: none; /* Firefox */
-            -ms-overflow-style: none; /* IE/Edge */
+            scrollbar-width: none; 
+            -ms-overflow-style: none; 
             gap: 0.75rem;
             padding-bottom: 0.5rem;
-            touch-action: pan-x; /* Mengoptimalkan gesture geser */
+            touch-action: pan-x; 
         }
-        .worker-tabs-scroll::-webkit-scrollbar { display: none; /* Chrome/Safari */ }
-        .worker-tab-item {
-            scroll-snap-align: start;
-            flex-shrink: 0; /* Mencegah tombol mengecil di mobile */
-        }
-
+        .worker-tabs-scroll::-webkit-scrollbar { display: none; }
+        .worker-tab-item { scroll-snap-align: start; flex-shrink: 0; }
         .glass-header { background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(16px); border-bottom: 1px solid rgba(0,0,0,0.05); }
 
         @media (max-width: 768px) {
@@ -75,13 +76,13 @@
         .restricted-hidden { display: none !important; }
         .pb-safe { padding-bottom: env(safe-area-inset-bottom, 1.5rem); }
         
-        /* Animasi Progress Bar Pareto */
         @keyframes fillBar { from { width: 0; } }
         .animate-bar { animation: fillBar 1s cubic-bezier(0.4, 0, 0.2, 1) forwards; }
     </style>
 </head>
 <body class="text-slate-800 pb-36">
     
+    <!-- STREAMING_CHUNK:Navigasi Atas & Tombol Aksi -->
     <nav class="glass-header sticky top-0 z-40 shadow-sm">
         <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-16 sm:h-20 py-2 sm:py-0">
@@ -94,7 +95,6 @@
                         <p class="text-xs sm:text-sm font-medium text-slate-500">Sistem Laporan</p>
                     </div>
                 </div>
-                <!-- Action Buttons: Diperbesar agar mudah diklik -->
                 <div class="flex items-center gap-2 sm:gap-3">
                     <button onclick="openModeModal()" id="modeIndicatorBtn" class="h-11 px-3 sm:px-4 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition shadow-sm border border-slate-200" title="Ubah Mode Akses">
                         <i id="modeIcon" class="fas fa-eye text-blue-600 text-lg"></i>
@@ -104,13 +104,18 @@
                         <i class="fas fa-sync-alt text-lg"></i>
                         <span class="hidden sm:inline">Refresh</span>
                     </button>
+                    
+                    <!-- Tombol Export Excel Baru -->
+                    <button onclick="exportToExcel()" class="h-11 w-11 rounded-2xl bg-green-50 hover:bg-green-100 text-green-600 flex items-center justify-center transition shadow-sm border border-green-100" title="Export Laporan Lengkap ke Excel (Multi-Sheet)">
+                        <i class="fas fa-file-excel text-[22px]"></i>
+                    </button>
+
                     <button onclick="shareWhatsApp()" class="h-11 w-11 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-600 flex items-center justify-center transition shadow-sm border border-emerald-100" title="Bagikan ke WhatsApp">
                         <i class="fab fa-whatsapp text-[22px]"></i>
                     </button>
                 </div>
             </div>
             
-            <!-- STICKY TOTAL TIME (Pindah ke Atas) -->
             <div class="flex items-center justify-between mb-2 sm:mb-3 mt-3 sm:mt-0">
                  <div class="flex items-center gap-3.5 w-full bg-gradient-to-r from-white to-slate-50 px-4 py-3 rounded-2xl border border-slate-200 shadow-sm">
                     <div id="headerIconBox" class="w-10 h-10 rounded-xl bg-rose-50 text-brand-700 flex items-center justify-center text-lg shadow-sm transition-colors shrink-0">
@@ -126,7 +131,6 @@
                 </div>
             </div>
 
-            <!-- Worker Tabs Container (Hanya tampil di Mode Laporan) -->
             <div id="workerTabsContainer" class="pb-1">
                 <div id="workerTabs" class="worker-tabs-scroll px-1">
                     <!-- Populated dynamically -->
@@ -135,9 +139,9 @@
         </div>
     </nav>
 
+    <!-- STREAMING_CHUNK:Area Utama & Tampilan Data -->
     <main class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         
-        <!-- TAMPILAN: LAPORAN AKTIVITAS -->
         <div id="viewLaporan" class="fade-in">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
                 <div>
@@ -157,7 +161,6 @@
                 </div>
             </div>
 
-            <!-- Data Area Laporan -->
             <div id="activityContainer">
                 <div id="mobileActivityList" class="mobile-cards"></div>
                 <div class="bg-white rounded-3xl shadow-sm border border-slate-100 overflow-hidden hidden sm:block">
@@ -183,12 +186,8 @@
                 <p class="text-slate-500 text-sm font-medium mt-1">Ringkasan aktivitas seluruh pekerja berdasarkan waktu</p>
             </div>
 
-            <!-- Kartu Statistik Global -->
-            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8" id="analyticsStatsGrid">
-                <!-- Diisi via JavaScript -->
-            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-8" id="analyticsStatsGrid"></div>
 
-            <!-- Grafik Pareto (Ranking) -->
             <div class="bg-white rounded-3xl shadow-[0_8px_30px_rgba(0,0,0,0.04)] border border-slate-100 p-5 sm:p-7">
                 <div class="flex items-center justify-between mb-6">
                     <h3 class="text-lg font-extrabold text-slate-800 flex items-center gap-2.5">
@@ -197,31 +196,23 @@
                     </h3>
                     <span class="text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1.5 rounded-lg">Terbanyak -> Sedikit</span>
                 </div>
-                
-                <div id="paretoContainer" class="space-y-6">
-                    <!-- Diisi via JavaScript -->
-                </div>
+                <div id="paretoContainer" class="space-y-6"></div>
             </div>
         </div>
     </main>
 
-    <!-- BOTTOM NAVIGATION BAR (Navigasi Gaya Aplikasi Mobile) -->
+    <!-- STREAMING_CHUNK:Komponen UI Overlay (Bottom Nav & Modals) -->
     <div class="fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-xl border-t border-slate-100 shadow-[0_-15px_40px_rgba(0,0,0,0.05)] z-40 pb-safe transition-all">
         <div class="max-w-md mx-auto px-2 flex flex-row items-center justify-between">
             <div class="flex w-full py-1.5">
-                 <!-- Laporan Tab -->
                  <button id="tabLaporan" onclick="switchView('laporan')" class="flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-extrabold text-brand-700 transition-all group">
                     <div id="iconLaporan" class="w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center mb-1 transition-all scale-110 text-brand-600 shadow-sm"><i class="fas fa-list-ul text-lg"></i></div>
                     Laporan
                  </button>
-                 
-                 <!-- Analisa Tab -->
                  <button id="tabAnalisa" onclick="switchView('analisa')" class="flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-extrabold text-slate-400 hover:text-slate-600 transition-all group">
                     <div id="iconAnalisa" class="w-8 h-8 rounded-full bg-transparent flex items-center justify-center mb-1 transition-all scale-100 group-hover:bg-slate-50"><i class="fas fa-chart-pie text-lg"></i></div>
                     Analisa
                  </button>
-                 
-                 <!-- Sync Button (Hanya tampil Mode Edit - Terintegrasi di Navigasi) -->
                  <button onclick="syncToSpreadsheet()" id="syncBtn" class="flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-extrabold text-slate-500 hover:text-slate-700 transition-all restricted-hidden group">
                     <div class="w-8 h-8 rounded-full bg-slate-50 border border-slate-200 text-blue-500 flex items-center justify-center mb-1 shadow-sm group-active:scale-95"><i class="fas fa-cloud-arrow-up text-lg"></i></div>
                     Simpan
@@ -230,7 +221,7 @@
         </div>
     </div>
 
-    <!-- Modal Mode Akses -->
+    <!-- Modals (Mode, Activity, Worker, Confirm) -->
     <div id="modeModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 transition-opacity">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all">
             <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -238,21 +229,18 @@
                 <button onclick="closeModal('modeModal')" class="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-slate-500 hover:bg-slate-100 transition"><i class="fas fa-times"></i></button>
             </div>
             <div class="p-6 space-y-5">
-                <div id="modeStatusDesc" class="text-sm text-slate-600 font-medium bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50 leading-relaxed">
-                    Saat ini aplikasi berada dalam <strong>Mode Lihat</strong>.
-                </div>
+                <div id="modeStatusDesc" class="text-sm text-slate-600 font-medium bg-blue-50/50 p-4 rounded-2xl border border-blue-100/50 leading-relaxed"></div>
                 <div id="adminUnlockContainer">
                     <label class="block text-[11px] font-extrabold text-slate-500 mb-2 uppercase tracking-wider">MASUKKAN PIN AKSES (1234)</label>
-                    <input type="password" id="adminPinInput" class="w-full border-slate-200 rounded-2xl p-4 bg-slate-50 border-2 focus:border-brand-500 focus:bg-white outline-none transition text-center text-lg tracking-[0.5em] font-bold placeholder:tracking-normal placeholder:font-normal placeholder:text-sm" placeholder="PIN 4 Digit">
+                    <input type="password" id="adminPinInput" class="w-full border-slate-200 rounded-2xl p-4 bg-slate-50 border-2 focus:border-brand-500 focus:bg-white outline-none transition text-center text-lg tracking-[0.5em] font-bold" placeholder="PIN 4 Digit">
                 </div>
                 <div class="pt-2">
-                    <button id="modeActionBtn" onclick="toggleUserMode()" class="w-full bg-brand-700 hover:bg-brand-800 active:scale-95 text-white font-extrabold py-4 rounded-2xl shadow-lg shadow-brand-700/20 transition">Aktifkan Mode Edit</button>
+                    <button id="modeActionBtn" onclick="toggleUserMode()" class="w-full bg-brand-700 hover:bg-brand-800 active:scale-95 text-white font-extrabold py-4 rounded-2xl shadow-lg transition">Aktifkan</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Form Aktivitas -->
     <div id="activityModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-end sm:items-center justify-center sm:p-4 transition-opacity">
         <div class="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl w-full max-w-md overflow-hidden transform transition-all">
             <div class="p-5 sm:p-6 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -276,13 +264,12 @@
                     </div>
                 </div>
                 <div class="pt-3">
-                    <button onclick="saveActivity()" class="w-full bg-brand-700 hover:bg-brand-800 active:scale-95 text-white font-extrabold py-4 rounded-2xl shadow-lg shadow-brand-700/20 transition">Simpan Aktivitas</button>
+                    <button onclick="saveActivity()" class="w-full bg-brand-700 hover:bg-brand-800 active:scale-95 text-white font-extrabold py-4 rounded-2xl shadow-lg transition">Simpan Aktivitas</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Edit Nama Pekerja -->
     <div id="workerModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4 transition-opacity">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden transform transition-all">
             <div class="p-5 border-b border-slate-100 flex justify-between items-center bg-slate-50/50">
@@ -295,24 +282,20 @@
                     <input type="text" id="newWorkerNameInput" class="w-full border-slate-200 rounded-2xl p-4 bg-slate-50 border-2 focus:border-brand-500 focus:bg-white outline-none transition text-sm font-bold" placeholder="Masukkan nama pekerja...">
                 </div>
                 <div class="pt-2">
-                    <button onclick="saveWorkerName()" class="w-full bg-brand-700 hover:bg-brand-800 active:scale-95 text-white font-extrabold py-4 rounded-2xl shadow-lg shadow-brand-700/20 transition">Simpan Perubahan</button>
+                    <button onclick="saveWorkerName()" class="w-full bg-brand-700 hover:bg-brand-800 active:scale-95 text-white font-extrabold py-4 rounded-2xl shadow-lg transition">Simpan Perubahan</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Toast Notification -->
     <div id="toast" class="fixed top-6 left-1/2 -translate-x-1/2 px-6 py-4 rounded-2xl shadow-2xl transition-all duration-300 toast-exit z-[100] flex items-center gap-3 text-sm font-bold max-w-[90vw] whitespace-nowrap">
         <i id="toastIcon" class="fas fa-check-circle text-xl"></i>
         <span id="toastMsg">Pesan</span>
     </div>
 
-    <!-- Confirm Modal -->
     <div id="confirmModal" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm hidden z-[100] flex items-center justify-center p-4">
         <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden p-7 text-center transform transition-all">
-            <div class="w-20 h-20 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-5 text-3xl shadow-inner border-4 border-white">
-                <i class="fas fa-trash-alt"></i>
-            </div>
+            <div class="w-20 h-20 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-5 text-3xl shadow-inner border-4 border-white"><i class="fas fa-trash-alt"></i></div>
             <h3 class="font-black text-xl text-slate-800 mb-2" id="confirmTitle">Hapus Data?</h3>
             <p class="text-slate-500 text-sm mb-7 font-medium" id="confirmMessage">Tindakan ini tidak dapat dibatalkan.</p>
             <div class="flex gap-3 justify-center">
@@ -322,16 +305,16 @@
         </div>
     </div>
 
+    <!-- STREAMING_CHUNK:Javascript Logic -->
     <script>
         let workers = [];
         let activities = [];
         let currentWorkerId = null;
         let isUserMode = false;
-        let currentView = 'laporan'; // 'laporan' atau 'analisa'
-        const APP_PIN = "1234"; // PIN Edit Mode
+        let currentView = 'laporan';
+        const APP_PIN = "1234";
         const SPREADSHEET_API_URL = 'https://script.google.com/macros/s/AKfycbzODRrSlZ-Kl3VTgHQhGj-xw-q0tLfDnNYXEfT9mBoFWIkkKKMCMmXzVsS0v85ZPgiC/exec'; 
 
-        // Inisialisasi Aplikasi
         function initApp() {
             const savedWorkers = localStorage.getItem('gwip_workers_v2');
             if (savedWorkers) {
@@ -347,11 +330,10 @@
             renderWorkerTabs();
             renderActivities();
             
-            // Auto fetch on load
             setTimeout(() => { fetchFromSpreadsheet(); }, 500);
         }
 
-        // Logic Penggantian View (Laporan <-> Analisa)
+        /* STREAMING_CHUNK:Logic Penggantian View Navigasi */
         function switchView(view) {
             currentView = view;
             const tabLaporan = document.getElementById('tabLaporan');
@@ -363,11 +345,8 @@
             const workerTabsContainer = document.getElementById('workerTabsContainer');
             
             if (view === 'laporan') {
-                // Style Active Nav (Laporan)
                 tabLaporan.className = "flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-extrabold text-brand-700 transition-all group";
                 iconLaporan.className = "w-8 h-8 rounded-full bg-brand-50 flex items-center justify-center mb-1 transition-all scale-110 text-brand-600 shadow-sm";
-                
-                // Style Inactive Nav (Analisa)
                 tabAnalisa.className = "flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-extrabold text-slate-400 hover:text-slate-600 transition-all group";
                 iconAnalisa.className = "w-8 h-8 rounded-full bg-transparent flex items-center justify-center mb-1 transition-all scale-100 group-hover:bg-slate-50";
                 
@@ -379,11 +358,8 @@
                 document.getElementById('headerIconBox').className = "w-10 h-10 rounded-xl bg-rose-50 text-brand-700 flex items-center justify-center text-lg shadow-sm transition-colors shrink-0";
                 renderActivities(); 
             } else {
-                // Style Active Nav (Analisa)
                 tabAnalisa.className = "flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-extrabold text-blue-700 transition-all group";
                 iconAnalisa.className = "w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center mb-1 transition-all scale-110 text-blue-600 shadow-sm";
-                
-                // Style Inactive Nav (Laporan)
                 tabLaporan.className = "flex-1 flex flex-col items-center justify-center py-1.5 text-[10px] font-extrabold text-slate-400 hover:text-slate-600 transition-all group";
                 iconLaporan.className = "w-8 h-8 rounded-full bg-transparent flex items-center justify-center mb-1 transition-all scale-100 group-hover:bg-slate-50";
                 
@@ -395,20 +371,16 @@
                 document.getElementById('headerIconBox').className = "w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg shadow-sm transition-colors shrink-0";
                 renderAnalytics();
             }
-            updateUIMode(); // Update visibility based on mode & view
+            updateUIMode();
         }
 
-        // Logic Rendering Analisa & Pareto
+        /* STREAMING_CHUNK:Logic Analisa Data & Grafik */
         function renderAnalytics() {
             let totalAllTime = 0;
             let workerStats = {};
 
-            // Inisialisasi struktur data
-            workers.forEach(w => {
-                workerStats[w.id] = { name: w.name, totalTime: 0, taskCount: 0 };
-            });
+            workers.forEach(w => { workerStats[w.id] = { name: w.name, totalTime: 0, taskCount: 0 }; });
 
-            // Hitung akumulasi
             activities.forEach(a => {
                 const time = a.frequency * a.timePerFreq;
                 totalAllTime += time;
@@ -418,7 +390,6 @@
                 }
             });
 
-            // Update Statistik Atas (Modern Cards)
             document.getElementById('analyticsStatsGrid').innerHTML = `
                 <div class="bg-gradient-to-br from-blue-50 to-blue-100/50 p-5 rounded-3xl border border-blue-100/50 shadow-sm relative overflow-hidden flex flex-col justify-center h-full">
                     <div class="absolute -right-3 -top-3 text-blue-500/10 text-6xl"><i class="fas fa-users"></i></div>
@@ -449,7 +420,6 @@
                 </div>
             `;
 
-            // Sortir Pareto (Terbesar ke Terkecil)
             const sortedWorkers = Object.values(workerStats).sort((a, b) => b.totalTime - a.totalTime);
             const maxTime = sortedWorkers.length > 0 ? sortedWorkers[0].totalTime : 0;
             const paretoContainer = document.getElementById('paretoContainer');
@@ -459,40 +429,31 @@
             if(sortedWorkers.length === 0 || totalAllTime === 0) {
                 paretoContainer.innerHTML = `
                     <div class="text-center py-12 bg-slate-50 rounded-3xl border border-dashed border-slate-200">
-                        <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-slate-100">
-                            <i class="fas fa-chart-pie text-2xl text-slate-300"></i>
-                        </div>
+                        <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm border border-slate-100"><i class="fas fa-chart-pie text-2xl text-slate-300"></i></div>
                         <p class="text-slate-500 font-extrabold text-sm">Belum ada data aktivitas untuk dianalisa.</p>
                         <p class="text-slate-400 font-medium text-xs mt-1">Tambahkan aktivitas di menu Laporan terlebih dahulu.</p>
                     </div>`;
             } else {
                 sortedWorkers.forEach((ws, index) => {
-                    if (ws.totalTime === 0 && index > 4) return; // Hide zeros if list is long
+                    if (ws.totalTime === 0 && index > 4) return; 
                     
                     const percentage = maxTime > 0 ? (ws.totalTime / maxTime) * 100 : 0;
                     const absolutePercentage = totalAllTime > 0 ? ((ws.totalTime / totalAllTime) * 100).toFixed(1) : 0;
                     
-                    // Styling Rank Modern (Emas, Perak, Perunggu, Regular)
-                    let rankBadge = "";
-                    let barColor = "";
-                    
+                    let rankBadge = ""; let barColor = "";
                     if(index === 0) { 
-                        // Emas (Peringkat 1)
                         rankBadge = `<div class="w-9 h-9 rounded-xl bg-gradient-to-br from-amber-200 to-amber-400 flex items-center justify-center text-sm font-black text-amber-900 shadow-md shadow-amber-400/30 border border-amber-100 shrink-0"><i class="fas fa-trophy text-[11px] mr-1 opacity-70"></i>1</div>`;
                         barColor = "from-amber-400 via-orange-400 to-orange-500";
                     }
                     else if(index === 1) { 
-                        // Perak (Peringkat 2)
                         rankBadge = `<div class="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-200 to-slate-400 flex items-center justify-center text-sm font-black text-slate-800 shadow-md shadow-slate-400/20 border border-slate-100 shrink-0">2</div>`;
                         barColor = "from-slate-400 to-slate-500";
                     }
                     else if(index === 2) { 
-                        // Perunggu (Peringkat 3)
                         rankBadge = `<div class="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-200 to-orange-300 flex items-center justify-center text-sm font-black text-orange-900 shadow-md shadow-orange-300/20 border border-orange-100 shrink-0">3</div>`;
                         barColor = "from-orange-300 to-orange-400";
                     }
                     else {
-                        // Regular
                         rankBadge = `<div class="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center text-sm font-black text-slate-500 border border-slate-200 shrink-0">${index + 1}</div>`;
                         barColor = "from-slate-300 to-slate-400";
                     }
@@ -523,11 +484,10 @@
                 });
             }
 
-            // Update Sticky Footer
             document.getElementById('totalTimeDisplay').innerText = totalAllTime;
         }
 
-        // Fungsi Umum (Penyimpanan, UI, dll)
+        /* STREAMING_CHUNK:Logic Data Pekerja & Tampilan Laporan */
         function saveLocalData() {
             localStorage.setItem('gwip_workers_v2', JSON.stringify(workers));
             localStorage.setItem('gwip_activities_v2', JSON.stringify(activities));
@@ -545,12 +505,10 @@
                 modeIcon.className = "fas fa-lock-open text-emerald-600 text-lg";
                 modeText.innerText = "Mode Edit";
                 
-                // Elemen hanya tampil jika mode edit
                 syncBtn.classList.remove('restricted-hidden');
                 editWorkerBtn.classList.remove('restricted-hidden');
                 desktopActionHeaders.forEach(el => el.classList.remove('restricted-hidden'));
                 
-                // Add button hanya tampil di View Laporan & Mode Edit
                 if (currentView === 'laporan') addActivityBtn.classList.remove('restricted-hidden');
                 else addActivityBtn.classList.add('restricted-hidden');
 
@@ -558,7 +516,6 @@
                 modeIcon.className = "fas fa-eye text-blue-600 text-lg";
                 modeText.innerText = "Mode Lihat";
                 
-                // Sembunyikan elemen
                 syncBtn.classList.add('restricted-hidden');
                 editWorkerBtn.classList.add('restricted-hidden');
                 addActivityBtn.classList.add('restricted-hidden');
@@ -576,12 +533,12 @@
                 modeStatusDesc.innerHTML = "Aplikasi sedang dalam <strong>Mode Edit</strong>. Anda dapat mengunci kembali agar data aman dari perubahan tidak sengaja.";
                 adminUnlockContainer.classList.add('hidden');
                 modeActionBtn.innerText = "Kunci (Mode Lihat)";
-                modeActionBtn.className = "w-full bg-slate-800 hover:bg-slate-900 active:scale-95 text-white font-extrabold py-4 rounded-2xl shadow-lg shadow-slate-900/20 transition";
+                modeActionBtn.className = "w-full bg-slate-800 hover:bg-slate-900 active:scale-95 text-white font-extrabold py-4 rounded-2xl shadow-lg transition";
             } else {
                 modeStatusDesc.innerHTML = "Aplikasi dalam <strong>Mode Lihat</strong>. Masukkan PIN untuk membuka fitur input dan simpan ke cloud.";
                 adminUnlockContainer.classList.remove('hidden');
                 modeActionBtn.innerText = "Buka Mode Edit";
-                modeActionBtn.className = "w-full bg-brand-700 hover:bg-brand-800 active:scale-95 text-white font-extrabold py-4 rounded-2xl shadow-lg shadow-brand-700/20 transition";
+                modeActionBtn.className = "w-full bg-brand-700 hover:bg-brand-800 active:scale-95 text-white font-extrabold py-4 rounded-2xl shadow-lg transition";
             }
             document.getElementById('modeModal').classList.remove('hidden');
         }
@@ -614,8 +571,7 @@
             const icon = document.getElementById('toastIcon');
             document.getElementById('toastMsg').innerText = msg;
             
-            let bgClass = "bg-slate-900";
-            let iconClass = "text-emerald-400";
+            let bgClass = "bg-slate-900"; let iconClass = "text-emerald-400";
             
             if (type === 'error') { bgClass = "bg-rose-600"; iconClass = "text-white"; icon.className = `fas fa-triangle-exclamation ${iconClass} text-xl`; } 
             else if (type === 'info') { bgClass = "bg-blue-600"; iconClass = "text-white"; icon.className = `fas fa-info-circle ${iconClass} text-xl`; }
@@ -644,7 +600,6 @@
             workers.forEach(w => {
                 const isActive = w.id === currentWorkerId;
                 const btn = document.createElement('button');
-                // Desain Modern untuk Tabs Pekerja
                 btn.className = `worker-tab-item whitespace-nowrap px-6 py-3.5 rounded-2xl text-[13px] font-extrabold transition-all duration-300 border-2 ${isActive ? 'bg-gradient-to-r from-brand-600 to-brand-800 text-white border-brand-700 shadow-lg shadow-brand-700/30' : 'bg-white text-slate-500 border-slate-100 hover:border-slate-200 hover:text-slate-800 hover:bg-slate-50'}`;
                 btn.innerText = w.name;
                 btn.onclick = () => { currentWorkerId = w.id; renderWorkerTabs(); if(currentView === 'laporan') renderActivities(); };
@@ -739,7 +694,7 @@
             }
         }
 
-        // Fungsi Modal & Input
+        /* STREAMING_CHUNK:Logic Form Modal & Konfirmasi Hapus */
         function openAddModal() {
             if (!isUserMode) return;
             document.getElementById('modalTitle').innerText = 'Tambah Aktivitas';
@@ -811,7 +766,6 @@
             }
         }
 
-        // Konfirmasi Hapus
         let confirmAction = null;
         function showConfirm(title, message, onConfirm) {
             document.getElementById('confirmTitle').innerText = title;
@@ -830,7 +784,7 @@
             });
         }
 
-        // Integrasi API & Share
+        /* STREAMING_CHUNK:Logic Integrasi Cloud, Export Excel, & Share */
         async function fetchFromSpreadsheet() {
             const btn = document.getElementById('refreshBtnTop');
             const icon = btn.querySelector('i');
@@ -881,7 +835,6 @@
             const btn = document.getElementById('syncBtn');
             const originalHTML = btn.innerHTML;
             
-            // Animasi Loading Mode Bottom Nav
             btn.innerHTML = `<div class="w-8 h-8 rounded-full bg-slate-50 border border-slate-200 text-blue-500 flex items-center justify-center mb-1 shadow-sm"><i class="fas fa-spinner fa-spin text-lg"></i></div>Simpan`;
             btn.disabled = true;
 
@@ -897,6 +850,95 @@
                 else throw new Error("Respon gagal");
             } catch (error) { showToast('Proses simpan selesai.', 'info'); } 
             finally { btn.innerHTML = originalHTML; btn.disabled = false; }
+        }
+
+        // ==========================================
+        // FITUR BARU: EXPORT DATA LENGKAP KE EXCEL
+        // ==========================================
+        function exportToExcel() {
+            // Validasi data
+            if (workers.length === 0) {
+                showToast('Belum ada data pekerja untuk diexport', 'error');
+                return;
+            }
+
+            showToast('Memproses file Excel...', 'info');
+
+            try {
+                // 1. Buat Buku Kerja (Workbook) Baru
+                const wb = XLSX.utils.book_new();
+
+                // 2. Looping (Putar) ke Setiap Pekerja untuk dibuatkan Sheet
+                // Jika ada 5 pekerja, akan terbuat 5 sheet (Tab) dalam Excel.
+                workers.forEach((worker, index) => {
+                    
+                    // Ambil aktivitas khusus untuk pekerja ini
+                    const workerActivities = activities.filter(a => a.workerId === worker.id);
+                    
+                    // Siapkan array data yang akan jadi baris & kolom di Excel
+                    let sheetData = [
+                        ['LAPORAN AKTIVITAS GWIP TRACKER'], // Baris 1: Judul
+                        ['Nama Pekerja', worker.name],       // Baris 2: Nama
+                        ['Tanggal Export', new Date().toLocaleString('id-ID')], // Baris 3: Tanggal
+                        [], // Baris 4: Spasi kosong
+                        // Baris 5: Header Tabel Utama
+                        ['No', 'Nama Aktivitas / Tugas', 'Frekuensi (Kali)', 'Durasi / Frekuensi (Menit)', 'Total Waktu (Menit)']
+                    ];
+                    
+                    let totalMins = 0;
+                    
+                    // Isi data aktivitas ke dalam baris
+                    if (workerActivities.length === 0) {
+                        sheetData.push(['-', 'Belum ada aktivitas yang dikerjakan', '-', '-', '-']);
+                    } else {
+                        workerActivities.forEach((a, idx) => {
+                            const total = a.frequency * a.timePerFreq;
+                            totalMins += total;
+                            sheetData.push([
+                                idx + 1,
+                                a.name,
+                                a.frequency,
+                                a.timePerFreq,
+                                total
+                            ]);
+                        });
+                    }
+                    
+                    // Baris Total Keseluruhan
+                    sheetData.push([]); // Spasi
+                    sheetData.push(['', '', '', 'TOTAL KESELURUHAN WAKTU KERJA', totalMins]);
+                    
+                    // 3. Konversi array data menjadi Worksheet SheetJS
+                    const ws = XLSX.utils.aoa_to_sheet(sheetData);
+                    
+                    // Atur lebar kolom (Auto-size sederhana)
+                    const wscols = [
+                        {wch: 5},   // A: No
+                        {wch: 50},  // B: Nama Aktivitas
+                        {wch: 15},  // C: Frekuensi
+                        {wch: 25},  // D: Durasi
+                        {wch: 20}   // E: Total Waktu
+                    ];
+                    ws['!cols'] = wscols;
+
+                    // 4. Siapkan nama Sheet (Gunakan nama pekerja)
+                    // Aturan Excel: Max 31 karakter dan tidak boleh ada karakter khusus tertentu
+                    let sheetName = worker.name.substring(0, 31).replace(/[\\/?*\[\]]/g, '').trim();
+                    if(!sheetName) sheetName = `Pekerja_${index+1}`; // Fallback jika nama kosong
+
+                    // Masukkan Sheet ke dalam Workbook
+                    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+                });
+
+                // 5. Simpan (Download) File Excel
+                const dateStr = new Date().toISOString().split('T')[0]; // Format YYYY-MM-DD
+                XLSX.writeFile(wb, `Laporan_GWIP_Lengkap_${dateStr}.xlsx`);
+                
+                showToast('Berhasil mengunduh Excel!', 'success');
+            } catch (error) {
+                console.error("Gagal melakukan export Excel:", error);
+                showToast('Gagal membuat file Excel, coba lagi.', 'error');
+            }
         }
 
         function shareWhatsApp() {
